@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - FreshMart</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Orders container */
+        .orders-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 50px 20px;
+            background: linear-gradient(to bottom, #f9fafb 0%, #ffffff 100%);
+        }
+        
+        /* Page header */
+        .orders-header {
+            background: var(--gradient-primary);
+            color: var(--white);
+            padding: 35px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+        }
+        
+        .orders-header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        
+        .orders-header-subtitle {
+            margin-top: 8px;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        /* Order card */
+        .order-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            border: 2px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .order-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: var(--gradient-primary);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .order-card:hover {
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+        
+        .order-card:hover::before {
+            transform: scaleY(1);
+        }
+        
+        /* Order header */
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(16, 185, 129, 0.1);
+        }
+        
+        .order-id {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .order-id i {
+            color: var(--primary);
+        }
+        
+        /* Order status */
+        .order-status {
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        
+        .status-pending {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+        
+        .status-processing {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .status-completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-cancelled {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        
+        /* Order details grid */
+        .order-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .order-detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .order-detail-label {
+            font-size: 13px;
+            color: var(--dark-gray);
+            margin-bottom: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .order-detail-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        
+        /* Action buttons */
+        .order-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        
+        .order-btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: 2px solid;
+        }
+        
+        .order-btn-view {
+            background: var(--white);
+            color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .order-btn-view:hover {
+            background: var(--gradient-secondary);
+            color: var(--white);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+        }
+        
+        .order-btn-print {
+            background: var(--white);
+            color: #10b981;
+            border-color: #10b981;
+        }
+        
+        .order-btn-print:hover {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: var(--white);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+        }
+        
+        .order-btn-pdf {
+            background: var(--white);
+            color: #8b5cf6;
+            border-color: #8b5cf6;
+        }
+        
+        .order-btn-pdf:hover {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: var(--white);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(139, 92, 246, 0.3);
+        }
+        
+        /* Empty orders state */
+        .empty-orders {
+            text-align: center;
+            padding: 100px 20px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
+            border-radius: 24px;
+        }
+        
+        .empty-orders-icon {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 30px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 40px rgba(16, 185, 129, 0.3);
+        }
+        
+        .empty-orders-icon i {
+            font-size: 70px;
+            color: var(--white);
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar', { user: user, currentPage: 'orders' }) %>
+    
+    <!-- Main Content -->
+    <div class="orders-container">
+        <div class="orders-header">
+            <h1>
+                <i class="fas fa-list-alt"></i> My Purchase History
+            </h1>
+            <div class="orders-header-subtitle">
+                Track and manage all your orders
+            </div>
+        </div>
+        
+        <% if (messages.success && messages.success.length > 0) { %>
+            <div class="alert alert-success">
+                <%= messages.success[0] %>
+            </div>
+        <% } %>
+        
+        <% if (messages.error && messages.error.length > 0) { %>
+            <div class="alert alert-error">
+                <%= messages.error[0] %>
+            </div>
+        <% } %>
+        
+        <!-- Search Box -->
+        <div style="margin-bottom: 30px; background: var(--white); padding: 25px; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+            <form method="GET" action="/orders">
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <input 
+                        type="text" 
+                        name="search" 
+                        class="form-control" 
+                        placeholder="🔍 Search by Order ID or Status (e.g., Pending, Completed)..."
+                        value="<%= searchQuery || '' %>"
+                        style="flex: 1; min-width: 250px; border-radius: 12px; font-size: 15px;"
+                    >
+                    <button type="submit" class="btn" style="white-space: nowrap; border-radius: 12px;">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    <% if (searchQuery && searchQuery.trim() !== '') { %>
+                        <a href="/orders" class="btn btn-secondary" style="white-space: nowrap; border-radius: 12px;">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                    <% } %>
+                </div>
+            </form>
+            <% if (searchQuery && searchQuery.trim() !== '') { %>
+                <p style="margin-top: 12px; margin-bottom: 0; color: var(--dark-gray); font-size: 14px;">
+                    <i class="fas fa-info-circle"></i> 
+                    Searching for: <strong style="color: var(--primary);">"<%= searchQuery %>"</strong>
+                    <% if (orders && orders.length > 0) { %>
+                        - Found <%= orders.length %> order<%= orders.length === 1 ? '' : 's' %>
+                    <% } %>
+                </p>
+            <% } %>
+        </div>
+        
+        <% if (orders && orders.length > 0) { %>
+            <% orders.forEach(order => { %>
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-id">
+                            <i class="fas fa-receipt"></i>
+                            Order #<%= order.id %>
+                        </div>
+                        <div class="order-status status-<%= (order.status || 'Pending').toLowerCase() %>">
+                            <%= order.status || 'Pending' %>
+                        </div>
+                    </div>
+                    
+                    <div class="order-details">
+                        <div class="order-detail-item">
+                            <span class="order-detail-label">Order Date</span>
+                            <span class="order-detail-value">
+                                <%= new Date(order.created_at).toLocaleDateString('en-SG', { 
+                                    year: 'numeric', 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                }) %>
+                            </span>
+                        </div>
+                        
+                        <div class="order-detail-item">
+                            <span class="order-detail-label">Total Amount</span>
+                            <span class="order-detail-value" style="color: var(--primary);">
+                                $<%= parseFloat(order.total).toFixed(2) %>
+                            </span>
+                        </div>
+                        
+                        <div class="order-detail-item">
+                            <span class="order-detail-label">Items</span>
+                            <span class="order-detail-value">
+                                <%= order.item_count || 0 %> item(s)
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="order-actions">
+                        <a href="/order/<%= order.id %>" class="order-btn order-btn-view">
+                            <i class="fas fa-eye"></i> Details
+                        </a>
+                        <a href="/order/<%= order.id %>/print" class="order-btn order-btn-print">
+                            <i class="fas fa-print"></i> Print
+                        </a>
+                        <a href="/order/<%= order.id %>/pdf" class="order-btn order-btn-pdf">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div class="empty-orders">
+                <div class="empty-orders-icon">
+                    <i class="fas <%= searchQuery && searchQuery.trim() !== '' ? 'fa-search' : 'fa-receipt' %>"></i>
+                </div>
+                <h2 style="color: var(--text-dark); margin-bottom: 15px; font-size: 28px; font-weight: 800;">
+                    <%= searchQuery && searchQuery.trim() !== '' ? 'No Matching Orders Found' : 'No Orders Yet' %>
+                </h2>
+                <p style="color: var(--dark-gray); margin-bottom: 35px; font-size: 18px; line-height: 1.6;">
+                    <% if (searchQuery && searchQuery.trim() !== '') { %>
+                        We couldn't find any orders matching "<%= searchQuery %>"<br>
+                        Try a different search term or view all orders
+                    <% } else { %>
+                        Start shopping and your orders will appear here<br>
+                        Track your purchases and reorder your favorites!
+                    <% } %>
+                </p>
+                <% if (searchQuery && searchQuery.trim() !== '') { %>
+                    <a href="/orders" class="btn btn-primary btn-lg">
+                        <i class="fas fa-list"></i> View All Orders
+                    </a>
+                <% } else { %>
+                    <a href="/shopping" class="btn btn-primary btn-lg">
+                        <i class="fas fa-shopping-basket"></i> Browse Products
+                    </a>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+    
+    <%- include('partials/footer', { user: user }) %>
+    
+    <script src="/js/main.js"></script>
+</body>
+</html>

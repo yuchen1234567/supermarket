@@ -1,0 +1,106 @@
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-column">
+            <h3>
+                <% if (user && user.role === 'admin') { %>
+                    FreshMart Admin
+                <% } else { %>
+                    About FreshMart
+                <% } %>
+            </h3>
+            <p>
+                <% if (user && user.role === 'admin') { %>
+                    Manage your supermarket inventory and orders efficiently.
+                <% } else { %>
+                    Your trusted neighborhood supermarket for fresh groceries and daily essentials at great prices.
+                <% } %>
+            </p>
+            <% if (!user || user.role !== 'admin') { %>
+            <div class="social-links">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-youtube"></i></a>
+            </div>
+            <% } %>
+        </div>
+        
+        <div class="footer-column">
+            <h3>
+                <% if (user && user.role === 'admin') { %>
+                    Quick Links
+                <% } else { %>
+                    Shop
+                <% } %>
+            </h3>
+            <ul class="footer-links">
+                <% if (user && user.role === 'admin') { %>
+                    <li><a href="/inventory">Inventory</a></li>
+                    <li><a href="/admin/orders">Orders</a></li>
+                    <li><a href="/admin/users">User Management</a></li>
+                    <li><a href="/addProduct">Add Product</a></li>
+                <% } else { %>
+                    <li><a href="/shopping">All Products</a></li>
+                    <li><a href="#">Special Offers</a></li>
+                    <li><a href="#">New Arrivals</a></li>
+                    <li><a href="#">Weekly Deals</a></li>
+                    <li><a href="#">Organic Products</a></li>
+                <% } %>
+            </ul>
+        </div>
+        
+        <div class="footer-column">
+            <h3>
+                <% if (user && user.role === 'admin') { %>
+                    Support
+                <% } else { %>
+                    Help & Support
+                <% } %>
+            </h3>
+            <ul class="footer-links">
+                <% if (user && user.role === 'admin') { %>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Contact Support</a></li>
+                <% } else { %>
+                    <li><a href="#">FAQs</a></li>
+                    <li><a href="#">Delivery Information</a></li>
+                    <li><a href="#">Returns Policy</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                <% } %>
+            </ul>
+        </div>
+        
+        <div class="footer-column">
+            <h3>
+                <% if (user && user.role === 'admin') { %>
+                    Account
+                <% } else { %>
+                    My Account
+                <% } %>
+            </h3>
+            <ul class="footer-links">
+                <% if (user) { %>
+                    <% if (user.role === 'admin') { %>
+                        <li><a href="/">Dashboard</a></li>
+                        <li><a href="/logout">Logout</a></li>
+                    <% } else { %>
+                        <li><a href="/orders">My Orders</a></li>
+                        <li><a href="/cart">Shopping Cart</a></li>
+                        <li><a href="/logout">Logout</a></li>
+                    <% } %>
+                <% } else { %>
+                    <li><a href="/login">Login</a></li>
+                    <li><a href="/register">Register</a></li>
+                <% } %>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="footer-bottom">
+        <p>
+            &copy; 2024 FreshMart<% if (user && user.role === 'admin') { %> Admin Panel<% } %>. All rights reserved.
+        </p>
+    </div>
+</footer>

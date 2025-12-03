@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 2px dashed #ccc;
+            background: #fafafa;
+        }
+        .data-display {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Dashboard Chart Diagnostic Test</h1>
+    
+    <div class="test-section">
+        <h2>1️⃣ Data from Server</h2>
+        <div class="data-display">
+            <strong>Months:</strong> <%- JSON.stringify(chartData.months) %><br>
+            <strong>Revenue:</strong> <%- JSON.stringify(chartData.revenue) %><br>
+            <strong>Stats:</strong> Completed: <%= stats.completedOrders %>, Pending: <%= stats.pendingOrders %>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2️⃣ Chart.js Status</h2>
+        <div id="chartStatus" class="data-display">Checking...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3️⃣ Revenue Chart (Simple Test)</h2>
+        <canvas id="testChart" width="600" height="300"></canvas>
+    </div>
+    
+    <script>
+        // Check Chart.js
+        const statusDiv = document.getElementById('chartStatus');
+        if (typeof Chart === 'undefined') {
+            statusDiv.innerHTML = '❌ Chart.js NOT LOADED!';
+            statusDiv.style.background = '#ffebee';
+            statusDiv.style.color = '#c62828';
+        } else {
+            statusDiv.innerHTML = '✅ Chart.js loaded successfully! Version: ' + (Chart.version || 'unknown');
+            statusDiv.style.background = '#e8f5e9';
+            statusDiv.style.color = '#2e7d32';
+            
+            // Create test chart
+            const ctx = document.getElementById('testChart').getContext('2d');
+            
+            const monthsData = <%- JSON.stringify(chartData.months) %>;
+            const revenueData = <%- JSON.stringify(chartData.revenue) %>;
+            
+            console.log('Test Chart Data:', { monthsData, revenueData });
+            
+            try {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: monthsData,
+                        datasets: [{
+                            label: 'Revenue ($)',
+                            data: revenueData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Monthly Revenue Test Chart'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('✅ Test chart created successfully!');
+            } catch (error) {
+                console.error('❌ Error creating chart:', error);
+                alert('Chart creation failed: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

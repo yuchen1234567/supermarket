@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipment Details - Admin</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .shipment-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .shipment-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; }
+        .info-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; text-transform: uppercase; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-processing { background: #cce5ff; color: #004085; }
+        .status-shipped { background: #d1ecf1; color: #0c5460; }
+        .status-in_transit { background: #d4edda; color: #155724; }
+        .status-delivered { background: #d4edda; color: #155724; }
+        .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 20px 0; }
+        .quick-action-btn { padding: 15px; border: 2px solid #e0e0e0; background: white; border-radius: 10px; cursor: pointer; transition: all 0.3s; text-align: center; font-weight: 600; }
+        .quick-action-btn:hover { border-color: var(--primary); background: rgba(16, 185, 129, 0.05); }
+        .quick-action-btn.active { border-color: var(--primary); background: var(--primary); color: white; }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar', { user: user, currentPage: 'adminShipments' }) %>
+    
+    <div class="shipment-container">
+        <div class="shipment-header">
+            <h1><i class="fas fa-box"></i> Shipment Details</h1>
+            <div style="font-size: 20px; font-weight: 700; margin-top: 10px;"><%= shipment.tracking_number %></div>
+            <span class="status-badge status-<%= shipment.status %>"><%= shipment.status.replace('_', ' ') %></span>
+        </div>
+        
+        <% if (messages.success) { %><div class="alert alert-success"><%= messages.success %></div><% } %>
+        <% if (messages.error) { %><div class="alert alert-error"><%= messages.error %></div><% } %>
+        
+        <!-- Quick Update Status -->
+        <div class="info-card">
+            <h3 style="margin-bottom: 20px;"><i class="fas fa-sync-alt"></i> Quick Update Shipment Status</h3>
+            <form action="/admin/shipment/<%= shipment.id %>/status" method="POST" id="statusForm">
+                <div class="quick-actions">
+                    <button type="button" class="quick-action-btn <%= shipment.status === 'pending' ? 'active' : '' %>" onclick="selectStatus('pending')">
+                        <i class="fas fa-clock"></i><br>Pending
+                    </button>
+                    <button type="button" class="quick-action-btn <%= shipment.status === 'processing' ? 'active' : '' %>" onclick="selectStatus('processing')">
+                        <i class="fas fa-cog"></i><br>Processing
+                    </button>
+                    <button type="button" class="quick-action-btn <%= shipment.status === 'shipped' ? 'active' : '' %>" onclick="selectStatus('shipped')">
+                        <i class="fas fa-truck"></i><br>Shipped
+                    </button>
+                    <button type="button" class="quick-action-btn <%= shipment.status === 'in_transit' ? 'active' : '' %>" onclick="selectStatus('in_transit')">
+                        <i class="fas fa-shipping-fast"></i><br>In Transit
+                    </button>
+                    <button type="button" class="quick-action-btn <%= shipment.status === 'delivered' ? 'active' : '' %>" onclick="selectStatus('delivered')" style="border-color: #10b981;">
+                        <i class="fas fa-check-circle"></i><br>Delivered
+                    </button>
+                </div>
+                <input type="hidden" name="status" id="selectedStatus" value="<%= shipment.status %>" required>
+                <div style="margin: 15px 0;">
+                    <label>Location (Optional):</label>
+                    <input type="text" name="location" placeholder="e.g., Singapore Distribution Center" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                </div>
+                <div style="margin: 15px 0;">
+                    <label>Description (Optional):</label>
+                    <textarea name="description" rows="3" placeholder="Update note..." style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;"></textarea>
+                </div>
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107;">
+                    <strong><i class="fas fa-info-circle"></i> Important:</strong> Only when status is <strong>"Delivered"</strong> can customers confirm receipt!
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fas fa-save"></i> Update Status</button>
+            </form>
+        </div>
+        
+        <!-- Shipment Info -->
+        <div class="info-card">
+            <h3><i class="fas fa-shipping-fast"></i> Shipment Information</h3>
+            <p><strong>Order ID:</strong> <a href="/order/<%= shipment.order_id %>">#<%= shipment.order_id %></a></p>
+            <p><strong>Carrier:</strong> <%= shipment.carrier %></p>
+            <p><strong>Method:</strong> <%= shipment.shipping_method %></p>
+            <p><strong>Fee:</strong> $<%= parseFloat(shipment.shipping_fee).toFixed(2) %></p>
+            <p><strong>Est. Delivery:</strong> <%= shipment.estimated_delivery ? new Date(shipment.estimated_delivery).toLocaleDateString() : 'N/A' %></p>
+        </div>
+        
+        <!-- Recipient Info -->
+        <div class="info-card">
+            <h3><i class="fas fa-user"></i> Recipient Information</h3>
+            <p><strong>Name:</strong> <%= shipment.recipient_name %></p>
+            <p><strong>Phone:</strong> <%= shipment.phone %></p>
+            <p><strong>Address:</strong><br>
+                <%= shipment.address_line1 %><br>
+                <% if (shipment.address_line2) { %><%= shipment.address_line2 %><br><% } %>
+                <%= shipment.city %> <%= shipment.postal_code %>, <%= shipment.country %>
+            </p>
+        </div>
+        
+        <!-- Tracking History -->
+        <div class="info-card">
+            <h3><i class="fas fa-history"></i> Tracking History</h3>
+            <% if (shipment.tracking && shipment.tracking.length > 0) { %>
+                <% shipment.tracking.forEach(track => { %>
+                    <div style="padding: 15px; border-left: 3px solid var(--primary); margin: 10px 0; background: #f8f9fa;">
+                        <strong><%= track.status.toUpperCase() %></strong>
+                        <% if (track.location) { %> - <%= track.location %><% } %><br>
+                        <% if (track.description) { %><%= track.description %><br><% } %>
+                        <small style="color: #6c757d;"><%= new Date(track.created_at).toLocaleString() %></small>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <p style="text-align: center; color: #6c757d;">No tracking history yet</p>
+            <% } %>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/admin/shipments" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Shipments</a>
+        </div>
+    </div>
+    
+    <%- include('partials/footer', { user: user }) %>
+    
+    <script>
+        function selectStatus(status) {
+            document.querySelectorAll('.quick-action-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.quick-action-btn').classList.add('active');
+            document.getElementById('selectedStatus').value = status;
+        }
+        document.getElementById('statusForm').addEventListener('submit', function(e) {
+            const status = document.getElementById('selectedStatus').value;
+            if (status === 'delivered' && !confirm('Confirm marking as delivered? Customers will be able to confirm receipt.')) { e.preventDefault(); }
+        });
+    </script>
+</body>
+</html>

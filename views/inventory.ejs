@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management - FreshMart Admin</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/navbar', { user: user, currentPage: 'inventory', pageTitle: 'Inventory Management' }) %>
+    
+    <!-- Main Content -->
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 class="section-title" style="margin: 0;">
+                <i class="fas fa-warehouse"></i> Product Inventory
+            </h2>
+            <a href="/addProduct" class="btn">
+                <i class="fas fa-plus-circle"></i> New Item
+            </a>
+        </div>
+        
+        <% if (messages && messages.success && messages.success.length > 0) { %>
+            <div class="alert alert-success">
+                <%= messages.success[0] %>
+            </div>
+        <% } %>
+        
+        <% if (messages && messages.error && messages.error.length > 0) { %>
+            <div class="alert alert-error">
+                <%= messages.error[0] %>
+            </div>
+        <% } %>
+        
+        <% const categoryOptions = (typeof categories !== 'undefined' && categories && categories.length)
+    ? categories
+    : [
+        { value: 'Fruits & Vegetables', label: 'Fruits & Vegetables' },
+        { value: 'Meat & Seafood', label: 'Meat & Seafood' },
+        { value: 'Dairy & Eggs', label: 'Dairy & Eggs' },
+        { value: 'Bakery', label: 'Bakery' },
+        { value: 'Beverages', label: 'Beverages' },
+        { value: 'Snacks', label: 'Snacks' }
+    ]; %>
+
+
+        <% if (products && products.length > 0) { %>
+            <nav class="category-nav" style="margin-bottom: 20px;" data-filter-nav>
+                <div class="category-nav-content">
+                    <ul>
+                        <li><a href="#" class="active" data-category="">All</a></li>
+                        <% categoryOptions.forEach(option => { %>
+                            <li><a href="#" data-category="<%= option.value %>"><%= option.label %></a></li>
+                        <% }); %>
+                    </ul>
+                </div>
+            </nav>
+
+            <div style="overflow-x: auto;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Image</th>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% products.forEach(product => { %>
+                            <tr data-category="<%= (product.category || 'General').trim() %>">
+                                <td><strong>#<%= product.id %></strong></td>
+                                <td>
+                                    <img src="images/<%= product.image %>" 
+                                         alt="<%= product.productName %>" 
+                                         style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;"
+                                         onerror="this.src='https://via.placeholder.com/60x60?text=No+Image'">
+                                </td>
+                                <td>
+                                    <a href="/product/<%= product.id %>" style="color: var(--text-dark); text-decoration: none; font-weight: 500;">
+                                        <%= product.productName %>
+                                    </a>
+                                </td>
+                                <td>
+                                    <span style="padding: 4px 10px; border-radius: 12px; font-size: 12px; background-color: var(--light-gray); color: var(--text-dark);">
+                                        <%= product.category || 'General' %>
+                                    </span>
+                                </td>
+                                <td style="color: var(--primary); font-weight: bold;">
+                                    $<%= parseFloat(product.price).toFixed(2) %>
+                                </td>
+                                <td>
+                                    <span style="font-weight: 500;">
+                                        <%= product.quantity %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <% if (product.quantity === 0) { %>
+                                        <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; background-color: #f8d7da; color: #842029;">
+                                            Out of Stock
+                                        </span>
+                                    <% } else if (product.quantity < 10) { %>
+                                        <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; background-color: #fff3cd; color: #856404;">
+                                            Low Stock
+                                        </span>
+                                    <% } else { %>
+                                        <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; background-color: #d1e7dd; color: #0f5132;">
+                                            In Stock
+                                        </span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 8px;">
+                                        <a href="/product/<%= product.id %>" 
+                                           class="btn btn-secondary btn-sm"
+                                           title="Show Info">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                        <a href="/updateProduct/<%= product.id %>" 
+                                           class="btn btn-secondary btn-sm"
+                                           title="Modify">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                        <a href="/deleteProduct/<%= product.id %>" 
+                                           class="btn btn-danger btn-sm"
+                                           title="Remove"
+                                           onclick="return confirm('Are you sure you want to remove this product?');">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Summary Stats -->
+            <div style="margin-top: 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div style="background-color: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <div style="color: var(--dark-gray); font-size: 14px; margin-bottom: 5px;">Total Products</div>
+                    <div style="font-size: 28px; font-weight: bold; color: var(--primary);"><%= products.length %></div>
+                </div>
+                <div style="background-color: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <div style="color: var(--dark-gray); font-size: 14px; margin-bottom: 5px;">Low Stock Items</div>
+                    <div style="font-size: 28px; font-weight: bold; color: var(--warning);">
+                        <%= products.filter(p => p.quantity > 0 && p.quantity < 10).length %>
+                    </div>
+                </div>
+                <div style="background-color: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <div style="color: var(--dark-gray); font-size: 14px; margin-bottom: 5px;">Out of Stock</div>
+                    <div style="font-size: 28px; font-weight: bold; color: var(--danger);">
+                        <%= products.filter(p => p.quantity === 0).length %>
+                    </div>
+                </div>
+            </div>
+        <% } else { %>
+            <div style="text-align: center; padding: 80px 20px;">
+                <i class="fas fa-box-open" style="font-size: 80px; color: var(--dark-gray); margin-bottom: 20px;"></i>
+                <h3 style="color: var(--dark-gray);">No products in inventory</h3>
+                <p style="color: var(--dark-gray); margin-bottom: 30px;">Start by adding your first product</p>
+                <a href="/addProduct" class="btn" style="font-size: 18px; padding: 15px 40px;">
+                    <i class="fas fa-plus-circle"></i> Create Item
+                </a>
+            </div>
+        <% } %>
+    </div>
+    
+    <%- include('partials/footer', { user: user }) %>
+    
+    <script src="/js/main.js"></script>
+</body>
+</html>

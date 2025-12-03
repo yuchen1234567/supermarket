@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshMart - Your Neighborhood Supermarket</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/navbar', { user: user, currentPage: 'index' }) %>
+    
+    <!-- Hero Carousel -->
+    <div class="carousel">
+        <div class="carousel-slides">
+            <!-- Slide 1 -->
+            <div class="carousel-slide">
+                <img src="https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=1200&h=400&fit=crop" alt="Fresh Produce">
+                <div class="banner-content">
+                    <h1>Fresh Daily Produce</h1>
+                    <p>Farm-fresh fruits, vegetables, and quality groceries delivered daily</p>
+                    <% if (user) { %>
+                        <a href="<%= user.role === 'admin' ? '/inventory' : '/shopping' %>" class="banner-btn">
+                            <span class="btn-text">Shop Now</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    <% } else { %>
+                        <a href="/login" class="banner-btn">
+                            <span class="btn-text">Shop Now</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+            
+            <!-- Slide 2 -->
+            <div class="carousel-slide">
+                <img src="https://images.unsplash.com/photo-1601598851547-4302969d0614?w=1200&h=450&fit=crop" alt="Weekly Specials">
+                <div class="banner-content">
+                    <h1>Weekly Specials</h1>
+                    <p>Amazing deals and discounts on your favorite products</p>
+                    <% if (user) { %>
+                        <a href="<%= user.role === 'admin' ? '/inventory' : '/shopping' %>" class="banner-btn banner-btn-secondary">
+                            <span class="btn-text">View Deals</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    <% } else { %>
+                        <a href="/login" class="banner-btn banner-btn-secondary">
+                            <span class="btn-text">View Deals</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+            
+            <!-- Slide 3 -->
+            <div class="carousel-slide">
+                <img src="https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?w=1200&h=400&fit=crop" alt="Premium Selection">
+                <div class="banner-content">
+                    <h1>Premium Selection</h1>
+                    <p>Quality products at unbeatable prices</p>
+                    <% if (user) { %>
+                        <a href="<%= user.role === 'admin' ? '/inventory' : '/shopping' %>" class="banner-btn banner-btn-secondary">
+                            <span class="btn-text">Explore Now</span>
+                            <i class="fas fa-sparkles"></i>
+                        </a>
+                    <% } else { %>
+                        <a href="/login" class="banner-btn banner-btn-secondary">
+                            <span class="btn-text">Explore Now</span>
+                            <i class="fas fa-sparkles"></i>
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Carousel Controls -->
+        <button class="carousel-control prev">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="carousel-control next">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        
+        <!-- Carousel Indicators -->
+        <div class="carousel-indicators">
+            <button class="carousel-indicator active" data-index="0"></button>
+            <button class="carousel-indicator" data-index="1"></button>
+            <button class="carousel-indicator" data-index="2"></button>
+        </div>
+    </div>
+    
+    <!-- Category Navigation for Homepage -->
+    <% if ((!user || user.role !== 'admin') && categoryList && categoryList.length > 0) { %>
+    <nav class="homepage-category-nav category-nav">
+        <div class="container">
+            <div class="category-nav-header">
+                <h3 class="category-nav-title">
+                    <i class="fas fa-th-large"></i> Shop by Category
+                </h3>
+                <p class="category-nav-subtitle">Find exactly what you're looking for</p>
+            </div>
+            <div class="category-nav-grid">
+                <% categoryList.forEach(category => { %>
+                <a href="#<%= category.anchorId %>" class="category-nav-item" data-category="<%= category.key %>">
+                    <div class="category-icon"><%= category.icon %></div>
+                    <div class="category-name"><%= category.title %></div>
+                    <div class="category-count"><%= category.subtitle %></div>
+                </a>
+                <% }); %>
+                <a href="/shopping" class="category-nav-item category-nav-item-all">
+                    <div class="category-icon">⚡</div>
+                    <div class="category-name">Hot Deals</div>
+                    <div class="category-count">Special offers</div>
+                </a>
+            </div>
+        </div>
+    </nav>
+    <% } %>
+    
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <div class="container">
+            <% if (user) { %>
+                <% if (user.role === 'admin') { %>
+                    <div class="welcome-content">
+                        <div class="welcome-badge">Admin Portal</div>
+                        <h2 class="welcome-title">Dashboard Control Center</h2>
+                        <p class="welcome-description">
+                            Manage your inventory, track orders, and oversee your marketplace
+                        </p>
+                        <div class="action-btn-group">
+                            <a href="/admin/dashboard" class="btn btn-primary">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Analytics Dashboard</span>
+                            </a>
+                            <a href="/inventory" class="btn btn-secondary">
+                                <i class="fas fa-warehouse"></i>
+                                <span>Stock Management</span>
+                            </a>
+                            <a href="/admin/orders" class="btn btn-secondary">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span>Order History</span>
+                            </a>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="welcome-content">
+                        <div class="welcome-badge">Welcome Back 👋</div>
+                        <h2 class="welcome-title">Hi, <%= user.username %>!</h2>
+                        <p class="welcome-description">
+                            Ready to shop? Discover fresh groceries and amazing deals today
+                        </p>
+                        <a href="/shopping" class="btn btn-primary btn-lg">
+                            <i class="fas fa-shopping-basket"></i>
+                            <span>Browse Products</span>
+                        </a>
+                    </div>
+                <% } %>
+            <% } else { %>
+                <div class="welcome-content">
+                    <div class="welcome-badge">New Here? 🌟</div>
+                    <h2 class="welcome-title">Welcome to FreshMart</h2>
+                    <p class="welcome-description">
+                        Your neighborhood supermarket for fresh produce and quality groceries<br>
+                        <span style="color: var(--primary); font-weight: 600;">Sign up today and get free delivery on your first order!</span>
+                    </p>
+                    <div class="action-btn-group">
+                        <a href="/register" class="btn btn-primary btn-lg">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Create Account</span>
+                        </a>
+                        <a href="/login" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>Sign In</span>
+                        </a>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+    
+    <!-- Featured Products by Category -->
+    <% if ((!user || user.role !== 'admin') && categoryList && categoryList.length > 0) { %>
+    <section class="featured-products-section">
+    <div class="container">
+        <% categoryList.forEach(categoryInfo => {
+            const products = productsByCategory[categoryInfo.key];
+            if (products && products.length > 0) {
+                const categoryColor = categoryInfo.color || '#2563eb';
+        %>
+
+        <div class="category-section" id="<%= categoryInfo.anchorId %>">
+            <div class="category-header">
+                <div class="category-title-wrapper">
+                    <h2 class="category-title">
+                        <%= categoryInfo.icon %> <%= categoryInfo.title %>
+                    </h2>
+                    <p class="category-subtitle">Handpicked fresh items</p>
+                </div>
+                <a href="/shopping" class="view-all-btn">
+                    <span>Explore All</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            
+            <div class="product-grid-enhanced">
+                <% products.forEach(product => { %>
+                    <div class="product-card" data-category="<%= product.category || categoryInfo.key %>">
+                        <div class="product-image">
+                            <a href="/product/<%= product.id %>">
+                                <img src="/images/<%= product.image %>" alt="<%= product.productName %>" 
+                                     onerror="this.src='https://via.placeholder.com/300x300?text=No+Image'">
+                            </a>
+                            <% if (product.quantity < 10) { %>
+                                <span class="product-badge" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                                    Low Stock
+                                </span>
+                            <% } %>
+                        </div>
+                        <div class="product-content">
+                            <div class="product-category dynamic-category" style="--category-color: <%= categoryColor %>;">
+                                <i class="fas fa-tag"></i> <%= product.category %>
+                            </div>
+                            <h3 class="product-name">
+                                <a href="/product/<%= product.id %>" style="color: inherit; text-decoration: none;">
+                                    <%= product.productName %>
+                                </a>
+                            </h3>
+                            <div class="product-stock" style="font-size: 13px; color: var(--dark-gray); margin-bottom: 10px;">
+                                <i class="fas fa-box"></i> 
+                                <%= product.quantity %> available
+                            </div>
+                            <div class="product-price">
+                                $<%= parseFloat(product.price).toFixed(2) %>
+                            </div>
+                            
+                            <% if (user) { %>
+                                <% if (product.quantity > 0) { %>
+                                    <form action="/add-to-cart/<%= product.id %>" method="POST" style="margin-top: 12px;">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="add-to-cart">
+                                            <i class="fas fa-cart-plus"></i> Add to Basket
+                                        </button>
+                                    </form>
+                                <% } else { %>
+                                    <button class="add-to-cart" disabled style="opacity: 0.5; cursor: not-allowed;">
+                                        Out of Stock
+                                    </button>
+                                <% } %>
+                            <% } else { %>
+                                <a href="/login" class="add-to-cart" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">
+                                    <i class="fas fa-sign-in-alt"></i> Login to Buy
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+        
+        <% 
+            }
+        });
+        %>
+    </div>
+    </section>
+    <% } %>
+    
+    <!-- Services Section -->
+    <section class="services">
+        <div class="container">
+            <div class="services-header">
+                <h2 class="services-main-title">Why Choose FreshMart?</h2>
+                <p class="services-subtitle">Experience the best shopping with our premium services</p>
+            </div>
+            <div class="services-grid">
+                <div class="service-item">
+                    <div class="service-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h3 class="service-title">Fast Shipping</h3>
+                    <p class="service-desc">Quick delivery on all orders</p>
+                </div>
+                <div class="service-item">
+                    <div class="service-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="service-title">Fresh Quality</h3>
+                    <p class="service-desc">100% fresh and quality guaranteed products</p>
+                </div>
+                <div class="service-item">
+                    <div class="service-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h3 class="service-title">Wide Selection</h3>
+                    <p class="service-desc">Thousands of products from trusted brands</p>
+                </div>
+                <div class="service-item">
+                    <div class="service-icon">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <h3 class="service-title">Loyalty Rewards</h3>
+                    <p class="service-desc">Save more with our member points program</p>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 50px;">
+                <a href="/shopping" class="btn btn-primary btn-lg">
+                    <i class="fas fa-store"></i>
+                    <span>Start Shopping Now</span>
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <%- include('partials/footer', { user: user }) %>
+    
+    <script src="/js/main.js"></script>
+</body>
+</html>

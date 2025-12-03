@@ -1,0 +1,95 @@
+<!-- Header Top -->
+<header class="header-top">
+    <div class="header-top-content">
+        <div class="header-top-text">
+            <% if (user && user.role === 'admin') { %>
+                Admin Panel - <%= (typeof pageTitle !== 'undefined' ? pageTitle : 'Dashboard') %>
+            <% } else { %>
+                Free shipping on orders over $60 | Fresh groceries delivered daily
+            <% } %>
+        </div>
+        <div class="header-top-links">
+            <% if (user) { %>
+                <span>Welcome, <%= user.username %>!</span>
+            <% } else { %>
+                <a href="/register">Sign Up</a>
+                <a href="/login">Sign In</a>
+            <% } %>
+        </div>
+    </div>
+</header>
+
+<!-- Main Header -->
+<header class="header-main">
+    <div class="header-main-content">
+        <a href="/" class="logo">
+            <% if (user && user.role === 'admin') { %>
+                FreshMart Admin
+            <% } else { %>
+                FreshMart
+            <% } %>
+        </a>
+        
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search for products..." id="searchInput">
+        </div>
+        
+        <div class="nav-links">
+            <% if (user) { %>
+                <% if (user.role === 'admin') { %>
+                    <a href="/admin/dashboard" <%= currentPage === 'adminDashboard' ? 'style="color: var(--primary);"' : '' %>>
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/inventory" <%= currentPage === 'inventory' ? 'style="color: var(--primary);"' : '' %>>
+                        <i class="fas fa-warehouse"></i>
+                        <span>Stock</span>
+                    </a>
+                    <a href="/admin/orders" <%= currentPage === 'adminOrders' ? 'style="color: var(--primary);"' : '' %>>
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Orders</span>
+                    </a>
+                    <a href="/admin/shipments" <%= currentPage === 'adminShipments' ? 'style="color: var(--primary);"' : '' %>>
+                        <i class="fas fa-shipping-fast"></i>
+                        <span>Shipments</span>
+                    </a>
+                    <a href="/admin/refunds" <%= currentPage === 'adminRefunds' ? 'style="color: var(--primary);"' : '' %>>
+                        <i class="fas fa-undo"></i>
+                        <span>Refunds</span>
+                    </a>
+                    <a href="/admin/users" <%= currentPage === 'users' || currentPage === 'createAdmin' || currentPage === 'editUser' ? 'style="color: var(--primary);"' : '' %>>
+                        <i class="fas fa-user-friends"></i>
+                        <span>Users</span>
+                    </a>
+                <% } else { %>
+                    <a href="/cart" <%= currentPage === 'cart' ? 'style="color: var(--primary);"' : '' %>>
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>Basket</span>
+                    </a>
+                    <a href="/shopping" <%= currentPage === 'shopping' ? 'style="color: var(--primary);"' : '' %>>
+                        <i class="fas fa-th-large"></i>
+                        <span>Browse</span>
+                    </a>
+                    <a href="/orders" <%= currentPage === 'orders' ? 'style="color: var(--primary);"' : '' %>>
+                        <i class="fas fa-list-alt"></i>
+                        <span>Purchases</span>
+                    </a>
+                    <a href="/wallet" <%= currentPage === 'wallet' ? 'style="color: var(--primary);"' : '' %>>
+                        <i class="fas fa-wallet"></i>
+                        <span>Wallet</span>
+                    </a>
+                <% } %>
+                <a href="/logout">
+                    <i class="fas fa-power-off"></i>
+                    <span>Exit</span>
+                </a>
+            <% } else { %>
+                <a href="/login">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Login</span>
+                </a>
+            <% } %>
+        </div>
+    </div>
+</header>

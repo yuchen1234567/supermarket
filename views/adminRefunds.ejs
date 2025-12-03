@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refund Management - FreshMart Admin</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .filter-tab {
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            border: 2px solid #e0e0e0;
+            color: #333;
+        }
+        .filter-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .refunds-table {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: rgba(16, 185, 129, 0.1); color: var(--primary); }
+        .status-rejected { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar', { user: user, currentPage: 'admin' }) %>
+    
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h1><i class="fas fa-undo-alt"></i> Refund Management</h1>
+            <a href="/admin/dashboard" style="padding: 10px 20px; background: #6c757d; color: white; border-radius: 8px; text-decoration: none;">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+        
+        <% if (messages.error) { %>
+            <div style="background: #fee; color: #c00; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <%= messages.error %>
+            </div>
+        <% } %>
+        <% if (messages.success) { %>
+            <div style="background: #efe; color: #060; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <%= messages.success %>
+            </div>
+        <% } %>
+        
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <a href="/admin/refunds" class="filter-tab <%= !currentStatus ? 'active' : '' %>">
+                <i class="fas fa-th-list"></i> All
+            </a>
+            <a href="/admin/refunds?status=pending" class="filter-tab <%= currentStatus === 'pending' ? 'active' : '' %>">
+                <i class="fas fa-clock"></i> Pending
+            </a>
+            <a href="/admin/refunds?status=approved" class="filter-tab <%= currentStatus === 'approved' ? 'active' : '' %>">
+                <i class="fas fa-check-circle"></i> Approved
+            </a>
+            <a href="/admin/refunds?status=rejected" class="filter-tab <%= currentStatus === 'rejected' ? 'active' : '' %>">
+                <i class="fas fa-times-circle"></i> Rejected
+            </a>
+        </div>
+        
+        <div class="refunds-table">
+            <% if (refunds && refunds.length > 0) { %>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Order ID</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% refunds.forEach(refund => { %>
+                            <tr>
+                                <td><strong>#<%= refund.id %></strong></td>
+                                <td>
+                                    <div style="font-weight: 600;"><%= refund.username %></div>
+                                    <div style="font-size: 12px; color: #6c757d;"><%= refund.email %></div>
+                                </td>
+                                <td>
+                                    <a href="/order/<%= refund.order_id %>" style="color: var(--primary); text-decoration: none;">
+                                        #<%= refund.order_id %>
+                                    </a>
+                                </td>
+                                <td>
+                                    <strong style="font-size: 18px; color: var(--primary);">
+                                        $<%= parseFloat(refund.amount).toFixed(2) %>
+                                    </strong>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-<%= refund.status %>">
+                                        <%= refund.status.toUpperCase() %>
+                                    </span>
+                                </td>
+                                <td><%= new Date(refund.created_at).toLocaleDateString('en-SG') %></td>
+                                <td>
+                                    <a href="/admin/refund/<%= refund.id %>" 
+                                       style="padding: 8px 16px; background: var(--primary); color: white; border-radius: 6px; text-decoration: none; display: inline-block;">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <div style="text-align: center; padding: 80px 20px; color: #6c757d;">
+                    <i class="fas fa-inbox" style="font-size: 64px; margin-bottom: 20px; opacity: 0.3;"></i>
+                    <p style="font-size: 18px;">No refund requests found</p>
+                    <% if (currentStatus) { %>
+                        <p>No <%= currentStatus %> refund requests</p>
+                        <a href="/admin/refunds" style="color: var(--primary); text-decoration: none;">
+                            View all refunds
+                        </a>
+                    <% } else { %>
+                        <p>There are no refund requests yet</p>
+                    <% } %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+    
+    <%- include('partials/footer', { user: user }) %>
+    
+    <script src="/js/main.js"></script>
+</body>
+</html>

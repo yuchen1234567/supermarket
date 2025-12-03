@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice - Order #<%= order.id %></title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 40px;
+            background-color: #fff;
+        }
+        
+        .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 40px;
+            border: 1px solid #ddd;
+        }
+        
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #2196F3;
+        }
+        
+        .company-info h1 {
+            color: #2196F3;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .company-info p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .invoice-title {
+            text-align: right;
+        }
+        
+        .invoice-title h2 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .invoice-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .meta-section h3 {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .meta-content {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        
+        .meta-content p {
+            margin-bottom: 8px;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .meta-content strong {
+            color: #000;
+        }
+        
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        
+        .invoice-table thead {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .invoice-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .invoice-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .invoice-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .totals-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 40px;
+        }
+        
+        .totals-table {
+            width: 350px;
+        }
+        
+        .totals-table tr {
+            border-bottom: 1px solid #eee;
+        }
+        
+        .totals-table td {
+            padding: 12px 15px;
+        }
+        
+        .totals-table .total-row {
+            background-color: #2196F3;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .totals-table .total-row td {
+            padding: 15px;
+        }
+        
+        .invoice-footer {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-processing {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+        
+        .status-completed {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+        
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+        
+        .no-print {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .no-print button {
+            padding: 12px 30px;
+            margin: 0 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .btn-print {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .btn-print:hover {
+            background-color: #1976D2;
+        }
+        
+        .btn-back {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-back:hover {
+            background-color: #5a6268;
+        }
+        
+        @media print {
+            body {
+                padding: 0;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .invoice-container {
+                border: none;
+                padding: 20px;
+            }
+            
+            @page {
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="company-info">
+                <h1><i class="fas fa-shopping-cart"></i> FreshMart</h1>
+                <p>Your Neighborhood Supermarket</p>
+                <p>Email: support@freshmart.com</p>
+                <p>Phone: +65 6123 4567</p>
+            </div>
+            <div class="invoice-title">
+                <h2>INVOICE</h2>
+                <p style="font-size: 18px; color: #666;">#<%= order.id %></p>
+                <div style="margin-top: 15px;">
+                    <span class="status-badge status-<%= (order.status || 'Pending').toLowerCase() %>">
+                        <%= order.status || 'Pending' %>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Invoice Meta Information -->
+        <div class="invoice-meta">
+            <div class="meta-section">
+                <h3>Bill To</h3>
+                <div class="meta-content">
+                    <p><strong><%= user.username %></strong></p>
+                    <p><%= user.email %></p>
+                    <p><%= user.address %></p>
+                    <p>Phone: <%= user.contact %></p>
+                </div>
+            </div>
+            <div class="meta-section">
+                <h3>Invoice Details</h3>
+                <div class="meta-content">
+                    <p><strong>Invoice Date:</strong> <%= new Date(order.created_at).toLocaleDateString('en-SG', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+                    <p><strong>Order Date:</strong> <%= new Date(order.created_at).toLocaleDateString('en-SG', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+                    <p><strong>Invoice Number:</strong> INV-<%= order.id.toString().padStart(6, '0') %></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Items Table -->
+        <table class="invoice-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Product</th>
+                    <th class="text-center" style="width: 100px;">Quantity</th>
+                    <th class="text-right" style="width: 120px;">Unit Price</th>
+                    <th class="text-right" style="width: 120px;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% items.forEach((item, index) => { %>
+                    <tr>
+                        <td><%= index + 1 %></td>
+                        <td><%= item.productName %></td>
+                        <td class="text-center"><%= item.quantity %></td>
+                        <td class="text-right">$<%= parseFloat(item.price).toFixed(2) %></td>
+                        <td class="text-right">$<%= (parseFloat(item.price) * item.quantity).toFixed(2) %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        
+        <!-- Totals -->
+        <div class="totals-section">
+            <table class="totals-table">
+                <tr>
+                    <td><strong>Subtotal:</strong></td>
+                    <td class="text-right">$<%= parseFloat(order.total).toFixed(2) %></td>
+                </tr>
+                <tr>
+                    <td><strong>Delivery Fee:</strong></td>
+                    <td class="text-right"><%= parseFloat(order.total) >= 60 ? 'FREE' : '$5.00' %></td>
+                </tr>
+                <tr class="total-row">
+                    <td><strong>TOTAL:</strong></td>
+                    <td class="text-right">$<%= (parseFloat(order.total) + (parseFloat(order.total) >= 60 ? 0 : 5)).toFixed(2) %></td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Footer -->
+        <div class="invoice-footer">
+            <p><strong>Thank you for shopping with FreshMart!</strong></p>
+            <p style="margin-top: 10px;">For any queries regarding this invoice, please contact us at support@freshmart.com</p>
+            <p style="margin-top: 20px; font-size: 12px;">
+                This is a computer-generated invoice and does not require a signature.
+            </p>
+        </div>
+        
+        <!-- Print Buttons (Hidden when printing) -->
+        <div class="no-print">
+            <button class="btn-print" onclick="window.print()">
+                <i class="fas fa-print"></i> Print / Save as PDF
+            </button>
+            <button class="btn-back" onclick="window.location.href='/orders'">
+                <i class="fas fa-arrow-left"></i> Back to Orders
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-print for PDF download
+        <% if (autoPrint) { %>
+            window.onload = function() {
+                window.print();
+            };
+        <% } %>
+    </script>
+</body>
+</html>

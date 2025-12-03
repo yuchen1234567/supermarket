@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - FreshMart</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .order-details-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .order-info-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .order-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        .item-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .item-details {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar', { user: user, currentPage: 'orderDetails' }) %>
+    
+    <!-- Main Content -->
+    <div class="order-details-container">
+        <div style="margin-bottom: 30px;">
+            <a href="/orders" style="color: var(--primary); text-decoration: none;">
+                <i class="fas fa-arrow-left"></i> Back to Orders
+            </a>
+        </div>
+        
+        <h1 style="margin-bottom: 30px;">
+            <i class="fas fa-receipt"></i> Order #<%= order.id %>
+        </h1>
+        
+        <!-- Order Information -->
+        <div class="order-info-card">
+            <h3 style="margin-bottom: 20px;">Order Information</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div>
+                    <div style="font-size: 12px; color: var(--dark-gray); margin-bottom: 5px;">Order Date</div>
+                    <div style="font-size: 16px; font-weight: 500;">
+                        <%= new Date(order.created_at).toLocaleDateString('en-SG', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) %>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 12px; color: var(--dark-gray); margin-bottom: 5px;">Status</div>
+                    <div style="font-size: 16px; font-weight: 500;">
+                        <span style="padding: 6px 15px; border-radius: 20px; background: rgba(16, 185, 129, 0.1); color: var(--primary);">
+                            <%= order.status || 'Pending' %>
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 12px; color: var(--dark-gray); margin-bottom: 5px;">Total Amount</div>
+                    <div style="font-size: 20px; font-weight: bold; color: var(--primary);">
+                        $<%= parseFloat(order.total).toFixed(2) %>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Delivery Information -->
+        <div class="order-info-card">
+            <h3 style="margin-bottom: 20px;">Delivery Information</h3>
+            <div>
+                <div style="margin-bottom: 10px;">
+                    <i class="fas fa-user"></i> <strong><%= order.username %></strong>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <i class="fas fa-envelope"></i> <%= order.email %>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <i class="fas fa-map-marker-alt"></i> <%= order.address %>
+                </div>
+                <div>
+                    <i class="fas fa-phone"></i> <%= order.contact %>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Shipping Information -->
+        <% if (order.shipment) { %>
+        <div class="order-info-card">
+            <h3 style="margin-bottom: 20px;"><i class="fas fa-shipping-fast"></i> Shipping Information</h3>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div>
+                        <div style="font-size: 12px; color: #6c757d; margin-bottom: 5px;">Tracking Number</div>
+                        <div style="font-size: 16px; font-weight: 600; color: var(--primary);">
+                            <%= order.shipment.tracking_number %>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: #6c757d; margin-bottom: 5px;">Shipping Status</div>
+                        <div style="font-size: 16px; font-weight: 500;">
+                            <span style="padding: 6px 15px; border-radius: 20px; background: <%= order.shipment.status === 'delivered' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)' %>; color: <%= order.shipment.status === 'delivered' ? 'var(--primary)' : '#3b82f6' %>;">
+                                <%= order.shipment.status.toUpperCase() %>
+                            </span>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: #6c757d; margin-bottom: 5px;">Carrier</div>
+                        <div style="font-size: 16px; font-weight: 500;">
+                            <%= order.shipment.carrier %>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: #6c757d; margin-bottom: 5px;">Shipping Method</div>
+                        <div style="font-size: 16px; font-weight: 500;">
+                            <%= order.shipment.shipping_method === 'express' ? 'Express ⚡' : 'Standard 📦' %>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: #6c757d; margin-bottom: 5px;">Shipping Fee</div>
+                        <div style="font-size: 16px; font-weight: 500;">
+                            $<%= parseFloat(order.shipment.shipping_fee).toFixed(2) %>
+                            <% if (order.shipment.shipping_fee == 0) { %>
+                                <span style="color: var(--primary); font-size: 12px;">🎁 FREE</span>
+                            <% } %>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: #6c757d; margin-bottom: 5px;">Estimated Delivery</div>
+                        <div style="font-size: 16px; font-weight: 500;">
+                            <%= order.shipment.estimated_delivery || 'TBD' %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tracking History -->
+            <% if (order.shipment.tracking && order.shipment.tracking.length > 0) { %>
+            <div style="margin-top: 25px;">
+                <h4 style="margin-bottom: 15px;"><i class="fas fa-route"></i> Tracking History</h4>
+                <div style="position: relative; padding-left: 30px;">
+                    <% order.shipment.tracking.forEach((track, index) => { %>
+                    <div style="position: relative; padding-bottom: <%= index === order.shipment.tracking.length - 1 ? '0' : '25px' %>;">
+                        <!-- Timeline dot -->
+                        <div style="position: absolute; left: -30px; width: 12px; height: 12px; background: var(--primary); border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px var(--primary);"></div>
+                        <!-- Timeline line -->
+                        <% if (index !== order.shipment.tracking.length - 1) { %>
+                        <div style="position: absolute; left: -24px; top: 12px; width: 2px; height: 100%; background: var(--light-gray);"></div>
+                        <% } %>
+                        <!-- Content -->
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                            <div style="font-weight: 600; margin-bottom: 5px;">
+                                <%= track.status.toUpperCase() %>
+                            </div>
+                            <% if (track.location) { %>
+                            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">
+                                <i class="fas fa-map-marker-alt"></i> <%= track.location %>
+                            </div>
+                            <% } %>
+                            <% if (track.description) { %>
+                            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">
+                                <%= track.description %>
+                            </div>
+                            <% } %>
+                            <div style="font-size: 12px; color: #6c757d;">
+                                <i class="fas fa-clock"></i> <%= new Date(track.timestamp).toLocaleString('en-SG') %>
+                            </div>
+                        </div>
+                    </div>
+                    <% }) %>
+                </div>
+            </div>
+            <% } %>
+            
+            <!-- Track Shipment Button -->
+            <div style="margin-top: 20px; text-align: center;">
+                <a href="/shipping/track/<%= order.shipment.tracking_number %>" 
+                   style="display: inline-block; background: var(--primary); color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+                    <i class="fas fa-search-location"></i> Track Shipment
+                </a>
+            </div>
+        </div>
+        <% } else { %>
+        <div class="order-info-card" style="background: #fff8e1; border-left: 4px solid #ffc107;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 24px; color: #ffc107;"></i>
+                <div>
+                    <div style="font-weight: 600; margin-bottom: 5px;">No Shipping Information Yet</div>
+                    <div style="font-size: 14px; color: #6c757d;">
+                        Shipping information will be created automatically when your order is processed.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <% } %>
+        
+        <!-- Order Items -->
+        <div class="order-info-card">
+            <h3 style="margin-bottom: 20px;">Order Items</h3>
+            <% if (order.items && order.items.length > 0) { %>
+                <% order.items.forEach(item => { %>
+                    <div class="order-item">
+                        <img src="/images/<%= item.image %>" alt="<%= item.productName %>" 
+                             class="item-image"
+                             onerror="this.src='https://via.placeholder.com/80x80?text=No+Image'">
+                        
+                        <div class="item-details">
+                            <div style="font-size: 16px; font-weight: 600; margin-bottom: 5px;">
+                                <%= item.productName %>
+                            </div>
+                            <div style="font-size: 14px; color: var(--dark-gray);">
+                                $<%= parseFloat(item.price).toFixed(2) %> × <%= item.quantity %>
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 18px; font-weight: bold;">
+                            $<%= (parseFloat(item.price) * item.quantity).toFixed(2) %>
+                        </div>
+                    </div>
+                <% }); %>
+                
+                <!-- Order Summary -->
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--light-gray);">
+                    <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: bold;">
+                        <span>Total:</span>
+                        <span style="color: var(--primary);">$<%= parseFloat(order.total).toFixed(2) %></span>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+        
+        <!-- Order Actions -->
+        <% if (user.role !== 'admin') { %>
+        <div style="margin-top: 30px; display: flex; gap: 15px; flex-wrap: wrap;">
+            <% if (order.shipment && order.shipment.status === 'delivered' && !order.is_confirmed) { %>
+                <!-- Confirm Delivery Button -->
+                <form action="/order/<%= order.id %>/confirm-delivery" method="POST" style="flex: 1; min-width: 200px;" onsubmit="return confirm('After confirming delivery, the order amount will be transferred to the merchant and refunds will no longer be available. Are you sure you want to confirm delivery?')">
+                    <button type="submit" style="width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <i class="fas fa-check-circle"></i>
+                        Confirm Delivery
+                    </button>
+                </form>
+            <% } %>
+            
+            <% if (order.is_confirmed) { %>
+                <!-- Already Confirmed -->
+                <div style="flex: 1; min-width: 200px; padding: 15px; background: rgba(16, 185, 129, 0.1); color: var(--primary); border-radius: 8px; text-align: center; font-weight: 600;">
+                    <i class="fas fa-check-double"></i> Delivery Confirmed
+                </div>
+            <% } %>
+            
+            <% if (!order.is_confirmed && !order.refund_request) { %>
+                <!-- Request Refund Button -->
+                <button onclick="document.getElementById('refundModal').style.display='flex'" style="flex: 1; min-width: 200px; padding: 15px; background: #f59e0b; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <i class="fas fa-undo"></i>
+                    Request Refund
+                </button>
+            <% } %>
+            
+            <% if (order.refund_request) { %>
+                <!-- Refund Status -->
+                <div style="flex: 1; min-width: 200px; padding: 15px; background: #fff3cd; color: #856404; border-radius: 8px; text-align: center; font-weight: 600;">
+                    <i class="fas fa-clock"></i> Refund Request: <%= order.refund_request.status %>
+                </div>
+            <% } %>
+        </div>
+        <% } %>
+    </div>
+    
+    <!-- Refund Modal -->
+    <div id="refundModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;" onclick="if(event.target === this) this.style.display='none'">
+        <div style="background: white; padding: 40px; border-radius: 15px; max-width: 600px; width: 90%;" onclick="event.stopPropagation()">
+            <h2 style="margin-bottom: 20px;"><i class="fas fa-undo"></i> Request Refund</h2>
+            <form action="/order/<%= order.id %>/request-refund" method="POST">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600;">Refund Reason *</label>
+                    <textarea name="reason" rows="5" required minlength="10"
+                              style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; resize: vertical;"
+                              placeholder="Please provide a detailed reason for the refund (at least 10 characters)"></textarea>
+                    <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Please provide a detailed reason (at least 10 characters)</div>
+                </div>
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="font-weight: 600; color: #856404; margin-bottom: 5px;">
+                        <i class="fas fa-exclamation-triangle"></i> Notice
+                    </div>
+                    <div style="font-size: 14px; color: #856404;">
+                        Refund requests require admin approval. Approved refunds will be returned to your wallet.
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button type="button" onclick="document.getElementById('refundModal').style.display='none'" 
+                            style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; background: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            style="flex: 1; padding: 12px; background: #f59e0b; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        <i class="fas fa-paper-plane"></i> Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <%- include('partials/footer', { user: user }) %>
+    
+    <script src="/js/main.js"></script>
+</body>
+</html>

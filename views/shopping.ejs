@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop - FreshMart</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+     <% const categoryOptions = (typeof categories !== 'undefined' && categories && categories.length)
+    ? categories
+    : [
+        { value: 'Fruits & Vegetables', label: 'Fruits & Vegetables' },
+        { value: 'Meat & Seafood', label: 'Meat & Seafood' },
+        { value: 'Dairy & Eggs', label: 'Dairy & Eggs' },
+        { value: 'Bakery', label: 'Bakery' },
+        { value: 'Beverages', label: 'Beverages' },
+        { value: 'Snacks', label: 'Snacks' }
+    ]; %>
+
+    <%- include('partials/navbar', { user: user, currentPage: 'shopping' }) %>
+    
+    <!-- Main Content -->
+    <div class="container">
+        <h2 class="section-title" style="margin-bottom: 30px;">
+            <i class="fas fa-shopping-basket"></i> Browse Our Products
+        </h2>
+        
+        <% if (messages && messages.success && messages.success.length > 0) { %>
+            <div class="alert alert-success">
+                <%= messages.success[0] %>
+            </div>
+        <% } %>
+        
+        <% if (messages && messages.error && messages.error.length > 0) { %>
+            <div class="alert alert-error">
+                <%= messages.error[0] %>
+            </div>
+        <% } %>
+        
+        <% if (error) { %>
+            <div class="alert alert-error"><%= error %></div>
+        <% } %>
+        
+        <% if (products && products.length > 0) { %>
+            <nav class="category-nav" style="margin-bottom: 20px;" data-filter-nav>
+                <div class="category-nav-content">
+                    <ul>
+                        <li><a href="#" class="active" data-category="">All</a></li>
+                        <% categoryOptions.forEach(option => { %>
+                            <li><a href="#" data-category="<%= option.value %>"><%= option.label %></a></li>
+                        <% }); %>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="product-grid">
+                <% products.forEach(product => { %>
+                    <div class="product-card" data-category="<%= (product.category || 'General').trim() %>">
+                        <div class="product-image">
+                            <a href="/product/<%= product.id %>">
+                                <img src="/images/<%= product.image %>" alt="<%= product.productName %>" 
+                                     onerror="this.src='https://via.placeholder.com/300x300?text=No+Image'">
+                            </a>
+                            <% if (product.quantity < 10) { %>
+                                <span class="product-badge" style="background-color: var(--warning); color: var(--text-dark);">
+                                    Low Stock
+                                </span>
+                            <% } else if (product.quantity > 50) { %>
+                                <span class="product-badge" style="background-color: var(--success);">
+                                    In Stock
+                                </span>
+                            <% } %>
+                        </div>
+                        <div class="product-content">
+                            <div class="product-category" style="color: var(--primary); font-size: 0.85rem; margin-bottom: 5px;">
+                                <i class="fas fa-tag"></i> <%= product.category || 'General' %>
+                            </div>
+                            <h3 class="product-name">
+                                <a href="/product/<%= product.id %>" style="color: inherit; text-decoration: none;">
+                                    <%= product.productName %>
+                                </a>
+                            </h3>
+                            <div class="product-stock">
+                                <i class="fas fa-box"></i> 
+                                <%= product.quantity %> available
+                            </div>
+                            <div class="product-price">
+                                $<%= parseFloat(product.price).toFixed(2) %>
+                            </div>
+                            
+                            <% if (product.quantity > 0) { %>
+                                <form action="/add-to-cart/<%= product.id %>" method="POST" style="margin-top: 10px;">
+                                    <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
+                                        <label style="font-size: 0.9rem; color: var(--dark-gray); white-space: nowrap;">Qty:</label>
+                                        <input 
+                                            type="number" 
+                                            name="quantity" 
+                                            class="form-control" 
+                                            style="flex: 1;" 
+                                            value="1" 
+                                            min="1" 
+                                            max="<%= product.quantity %>"
+                                            required
+                                        >
+                                        <span style="font-size: 0.85rem; color: var(--dark-gray); white-space: nowrap;">/ <%= product.quantity %></span>
+                                    </div>
+                                    <button type="submit" class="add-to-cart">
+                                        <i class="fas fa-cart-plus"></i> Add to Cart
+                                    </button>
+                                </form>
+                            <% } else { %>
+                                <button class="add-to-cart" disabled style="background-color: var(--medium-gray); cursor: not-allowed;">
+                                    Out of Stock
+                                </button>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div style="text-align: center; padding: 60px 20px;">
+                <i class="fas fa-box-open" style="font-size: 64px; color: var(--dark-gray); margin-bottom: 20px;"></i>
+                <h3 style="color: var(--dark-gray);">No products available</h3>
+                <p style="color: var(--dark-gray);">Check back soon for new items!</p>
+            </div>
+        <% } %>
+    </div>
+
+    <%- include('partials/footer', { user: user }) %>
+    
+    <script src="/js/main.js"></script>
+</body>
+</html>

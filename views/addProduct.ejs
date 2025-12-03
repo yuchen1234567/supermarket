@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - FreshMart Admin</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .form-card {
+            background-color: var(--white);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        .form-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+        .form-header i {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        .form-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+        .form-header p {
+            color: var(--dark-gray);
+        }
+    </style>
+</head>
+<body>
+    <% const categoryOptions = categories; %>
+
+
+    <%- include('partials/navbar', { user: user, currentPage: 'addProduct', pageTitle: 'Add New Product' }) %>
+    
+    <!-- Main Content -->
+    <div class="form-container">
+        <div style="margin-bottom: 30px;">
+            <a href="/inventory" style="color: var(--primary); text-decoration: none;">
+                <i class="fas fa-arrow-left"></i> Return to Stock
+            </a>
+        </div>
+        
+        <div class="form-card">
+            <div class="form-header">
+                <i class="fas fa-plus-circle"></i>
+                <h1>Create New Item</h1>
+                <p>Register a new product to your stock</p>
+            </div>
+            
+            <% if (messages && messages.success && messages.success.length > 0) { %>
+                <div class="alert alert-success">
+                    <%= messages.success[0] %>
+                </div>
+            <% } %>
+            
+            <% if (messages && messages.error && messages.error.length > 0) { %>
+                <div class="alert alert-error">
+                    <%= messages.error[0] %>
+                </div>
+            <% } %>
+            
+            <form action="/addProduct" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="name">
+                        <i class="fas fa-tag"></i> Product Name
+                    </label>
+                    <input type="text" class="form-control" id="name" name="name" 
+                           placeholder="Enter product name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">
+                        <i class="fas fa-list"></i> Category
+                    </label>
+                    <select name="category" class="form-control" required>
+    <option value="">-- Select Category --</option>
+    <option value="Fruits & Vegetables">Fruits & Vegetables</option>
+    <option value="Meat & Seafood">Meat & Seafood</option>
+    <option value="Dairy & Eggs">Dairy & Eggs</option>
+    <option value="Bakery">Bakery</option>
+    <option value="Beverages">Beverages</option>
+    <option value="Snacks">Snacks</option></select>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label for="quantity">
+                            <i class="fas fa-box"></i> Stock Quantity
+                        </label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" 
+                               min="0" step="1" placeholder="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="price">
+                            <i class="fas fa-dollar-sign"></i> Price ($)
+                        </label>
+                        <input type="number" class="form-control" id="price" name="price" 
+                               min="0" step="0.01" placeholder="0.00" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-camera"></i> Item Photo
+                    </label>
+                    <div class="custom-file-upload">
+                        <input type="file" id="image" name="image" accept="image/*" required style="display: none;">
+                        <button type="button" class="file-upload-btn" onclick="document.getElementById('image').click()">
+                            <i class="fas fa-upload"></i> Choose File
+                        </button>
+                        <span class="file-name" id="fileName">No file chosen</span>
+                    </div>
+                    <small style="color: var(--dark-gray); display: block; margin-top: 8px;">
+                        Recommended: Square photo, minimum 300x300 pixels
+                    </small>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px;">
+                    <a href="/inventory" class="btn btn-secondary">
+                        <i class="fas fa-ban"></i> Discard
+                    </a>
+                    <button type="submit" class="btn">
+                        <i class="fas fa-check-circle"></i> Register Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <%- include('partials/footer', { user: user }) %>
+    
+    <script src="/js/main.js"></script>
+    <script>
+        // Update file name display
+        document.getElementById('image').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || 'No file chosen';
+            document.getElementById('fileName').textContent = fileName;
+        });
+    </script>
+    <style>
+        .custom-file-upload {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .file-upload-btn {
+            padding: 10px 24px;
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.3s ease;
+        }
+        .file-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .file-name {
+            color: var(--dark-gray);
+            font-size: 14px;
+        }
+    </style>
+</body>
+</html>
