@@ -335,22 +335,12 @@
         
         <!-- Print Buttons (Hidden when printing) -->
         <div class="no-print">
-            <button class="btn-print" onclick="window.print()">
-                <i class="fas fa-print"></i> Print / Save as PDF
-            </button>
             <button class="btn-back" onclick="window.location.href='/orders'">
                 <i class="fas fa-arrow-left"></i> Back to Orders
             </button>
         </div>
     </div>
     
-    <script>
-        // Auto-print for PDF download
-        <% if (autoPrint) { %>
-            window.onload = function() {
-                window.print();
-            };
-        <% } %>
-    </script>
+
 </body>
 </html>
