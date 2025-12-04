@@ -11,9 +11,9 @@
             </h3>
             <p>
                 <% if (user && user.role === 'admin') { %>
-                    Manage your supermarket inventory and orders efficiently.
+                    Manage inventory and orders efficiently.
                 <% } else { %>
-                    Your trusted neighborhood supermarket for fresh groceries and daily essentials at great prices.
+                    Neighborhood supermarket for fresh groceries and daily essentials.
                 <% } %>
             </p>
             <% if (!user || user.role !== 'admin') { %>
@@ -21,7 +21,6 @@
                 <a href="#"><i class="fab fa-facebook-f"></i></a>
                 <a href="#"><i class="fab fa-instagram"></i></a>
                 <a href="#"><i class="fab fa-twitter"></i></a>
-                <a href="#"><i class="fab fa-youtube"></i></a>
             </div>
             <% } %>
         </div>
@@ -45,7 +44,6 @@
                     <li><a href="#">Special Offers</a></li>
                     <li><a href="#">New Arrivals</a></li>
                     <li><a href="#">Weekly Deals</a></li>
-                    <li><a href="#">Organic Products</a></li>
                 <% } %>
             </ul>
         </div>
@@ -80,7 +78,7 @@
     
     <div class="footer-bottom">
         <p>
-            &copy; 2024 FreshMart<% if (user && user.role === 'admin') { %> Admin Panel<% } %>. All rights reserved.
+            &copy; 2025 freshmart(YuChen)<% if (user && user.role === 'admin') { %> Admin Panel<% } %>. All rights reserved.
         </p>
     </div>
 </footer>

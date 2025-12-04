@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Address - FreshMart</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/navbar', { user: user, currentPage: 'addresses', pageTitle: 'Add Address' }) %>
+
+    <main class="container" style="max-width: 800px; margin: 40px auto;">
+        <h1 class="page-title"><i class="fas fa-map-marker-alt"></i> Add Address</h1>
+        <p class="page-subtitle">Save a delivery address for your orders.</p>
+
+        <% if (messages && messages.error) { %>
+            <div class="alert alert-danger"><%= messages.error %></div>
+        <% } %>
+
+        <form action="/addresses/add" method="POST" class="card" style="padding: 24px; border-radius: 12px;">
+            <div class="form-group">
+                <label>Recipient Name</label>
+                <input type="text" name="recipient_name" value="<%= formData && formData.recipient_name || '' %>" required>
+            </div>
+            <div class="form-group">
+                <label>Phone</label>
+                <input type="text" name="phone" value="<%= formData && formData.phone || '' %>" required>
+            </div>
+            <div class="form-group">
+                <label>Address Line 1</label>
+                <input type="text" name="address_line1" value="<%= formData && formData.address_line1 || '' %>" required>
+            </div>
+            <div class="form-group">
+                <label>Address Line 2 (optional)</label>
+                <input type="text" name="address_line2" value="<%= formData && formData.address_line2 || '' %>">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>City</label>
+                    <input type="text" name="city" value="<%= formData && formData.city || 'Singapore' %>" required>
+                </div>
+                <div class="form-group">
+                    <label>State</label>
+                    <input type="text" name="state" value="<%= formData && formData.state || '' %>">
+                </div>
+                <div class="form-group">
+                    <label>Postal Code</label>
+                    <input type="text" name="postal_code" value="<%= formData && formData.postal_code || '' %>" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Country</label>
+                <input type="text" name="country" value="<%= formData && formData.country || 'Singapore' %>">
+            </div>
+            <div class="form-group checkbox">
+                <label>
+                    <input type="checkbox" name="is_default" <%= formData && formData.is_default ? 'checked' : '' %>>
+                    Set as default address
+                </label>
+            </div>
+            <div class="form-actions" style="display:flex; gap:12px;">
+                <button type="submit" class="btn btn-primary">Save Address</button>
+                <a href="/addresses" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </main>
+
+    <%- include('partials/footer', { user: user }) %>
+    <script src="/js/main.js"></script>
+</body>
+</html>

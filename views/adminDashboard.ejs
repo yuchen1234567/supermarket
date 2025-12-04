@@ -91,6 +91,7 @@
                     <div class="chart-subtitle">Current order distribution</div>
                 </div>
                 <canvas id="orderStatusChart"></canvas>
+                <div id="orderStatusLegend" style="display:flex; flex-wrap:wrap; gap:12px; margin-top:16px;"></div>
             </div>
         </div>
         
@@ -145,44 +146,134 @@
     <script src="/js/main.js"></script>
     <script>
         window.addEventListener('load', function() {
-            if (typeof Chart === 'undefined') return;
             const statusCanvas = document.getElementById('orderStatusChart');
+            const legendContainer = document.getElementById('orderStatusLegend');
             if (!statusCanvas) return;
-            const statusCtx = statusCanvas.getContext('2d');
-            new Chart(statusCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Completed', 'Pending', 'Processing', 'Cancelled'],
-                    datasets: [{
-                        data: [
-                            <%- stats.completedOrders || 0 %>,
-                            <%- stats.pendingOrders || 0 %>,
-                            <%- stats.processingOrders || 0 %>,
-                            <%- stats.cancelledOrders || 0 %>
-                        ],
-                        backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ef4444'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 1.5,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { padding: 15, font: { size: 12, weight: '600' } }
-                        },
-                        tooltip: {
-                            backgroundColor: '#111827',
-                            padding: 12,
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 13 },
-                            cornerRadius: 8
-                        }
-                    }
+
+            const statusData = [
+                <%- stats.completedOrders || 0 %>,
+                <%- stats.pendingOrders || 0 %>,
+                <%- stats.processingOrders || 0 %>,
+                <%- stats.cancelledOrders || 0 %>
+            ];
+
+            const statusMeta = [
+                { label: 'Completed', color: '#10b981' },
+                { label: 'Pending', color: '#f59e0b' },
+                { label: 'Processing', color: '#3b82f6' },
+                { label: 'Cancelled', color: '#ef4444' }
+            ];
+
+            function renderLegend() {
+                if (!legendContainer) return;
+                legendContainer.innerHTML = '';
+                statusMeta.forEach((item, idx) => {
+                    const value = statusData[idx] || 0;
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:13px; color:#374151; padding:6px 10px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px;';
+                    const swatch = document.createElement('span');
+                    swatch.style.cssText = `width:12px; height:12px; border-radius:4px; background:${item.color}; display:inline-block;`;
+                    const label = document.createElement('span');
+                    label.textContent = `${item.label}: ${value}`;
+                    row.appendChild(swatch);
+                    row.appendChild(label);
+                    legendContainer.appendChild(row);
+                });
+            }
+
+            function drawFallbackChart() {
+                const ctx = statusCanvas.getContext('2d');
+                const rect = statusCanvas.getBoundingClientRect();
+                statusCanvas.width = rect.width || 600;
+                statusCanvas.height = rect.height || 400;
+
+                const total = statusData.reduce((sum, val) => sum + val, 0);
+                const cx = statusCanvas.width / 2;
+                const cy = statusCanvas.height / 2;
+                const radius = Math.min(cx, cy) - 12;
+
+                ctx.clearRect(0, 0, statusCanvas.width, statusCanvas.height);
+
+                if (total <= 0) {
+                    ctx.strokeStyle = '#e5e7eb';
+                    ctx.lineWidth = 16;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.fillStyle = '#6b7280';
+                    ctx.font = '16px Inter, system-ui, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('No data', cx, cy);
+                    renderLegend();
+                    return;
                 }
-            });
+
+                let startAngle = -Math.PI / 2;
+                statusData.forEach((value, idx) => {
+                    if (value <= 0) return;
+                    const sliceAngle = (value / total) * Math.PI * 2;
+                    ctx.beginPath();
+                    ctx.strokeStyle = statusMeta[idx].color;
+                    ctx.lineWidth = 18;
+                    ctx.arc(cx, cy, radius, startAngle, startAngle + sliceAngle);
+                    ctx.stroke();
+                    startAngle += sliceAngle;
+                });
+
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius - 22, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#1f2937';
+                ctx.font = '16px Inter, system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(total + ' orders', cx, cy);
+                renderLegend();
+            }
+
+            try {
+                if (typeof Chart !== 'undefined') {
+                    const statusCtx = statusCanvas.getContext('2d');
+                    new Chart(statusCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: statusMeta.map(item => item.label),
+                            datasets: [{
+                                data: statusData,
+                                backgroundColor: statusMeta.map(item => item.color),
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            aspectRatio: 1.5,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { padding: 15, font: { size: 12, weight: '600' } }
+                                },
+                                tooltip: {
+                                    backgroundColor: '#111827',
+                                    padding: 12,
+                                    titleFont: { size: 14, weight: 'bold' },
+                                    bodyFont: { size: 13 },
+                                    cornerRadius: 8
+                                }
+                            }
+                        }
+                    });
+                    renderLegend();
+                    return;
+                }
+            } catch (err) {
+                console.error('Chart.js failed to render, using fallback canvas chart.', err);
+            }
+
+            drawFallbackChart();
         });
     </script>
 </body>
