@@ -50,6 +50,10 @@ const Wallet = {
      * Freeze balance (when placing order)
      */
     freezeBalance: (userId, orderId, amount, callback) => {
+        const amt = parseFloat(amount);
+        if (Number.isNaN(amt) || amt <= 0) {
+            return callback(new Error('Invalid amount'));
+        }
         db.getConnection((err, connection) => {
             if (err) return callback(err);
 
@@ -77,7 +81,7 @@ const Wallet = {
                     }
 
                     const availableBalance = parseFloat(results[0].balance);
-                    if (availableBalance < amount) {
+                    if (availableBalance < amt) {
                         return connection.rollback(() => {
                             connection.release();
                             callback(new Error('Insufficient balance'));
@@ -85,7 +89,7 @@ const Wallet = {
                     }
 
                     const balanceBefore = availableBalance;
-                    const balanceAfter = availableBalance - amount;
+                    const balanceAfter = availableBalance - amt;
 
                     // Deduct from available balance and add to frozen balance
                     const updateSql = `
@@ -95,7 +99,7 @@ const Wallet = {
                             total_expense = total_expense + ?
                         WHERE user_id = ?
                     `;
-                    connection.query(updateSql, [amount, amount, amount, userId], (err) => {
+                    connection.query(updateSql, [amt, amt, amt, userId], (err) => {
                         if (err) {
                             return connection.rollback(() => {
                                 connection.release();
@@ -109,7 +113,7 @@ const Wallet = {
                             user_id: userId,
                             order_id: orderId,
                             type: 'purchase',
-                            amount: -amount,
+                            amount: -amt,
                             balance_before: balanceBefore,
                             balance_after: balanceAfter,
                             description
