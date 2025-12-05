@@ -7,7 +7,6 @@ const db = require('../db');  // Database connection
 
 /**
  * Get all products
- * @param {Function} callback - Callback function (err, results)
  */
 function getAll(callback) {
     const sql = 'SELECT id, productName, category, quantity, price, image FROM products';
@@ -16,8 +15,6 @@ function getAll(callback) {
 
 /**
  * Get single product by ID
- * @param {Number} id - Product ID
- * @param {Function} callback - Callback function (err, product)
  */
 function getById(id, callback) {
     const sql = 'SELECT id, productName, category, quantity, price, image FROM products WHERE id = ? LIMIT 1';
@@ -26,8 +23,6 @@ function getById(id, callback) {
 
 /**
  * Add new product
- * @param {Object} product - Product object { productName, category, quantity, price, image }
- * @param {Function} callback - Callback function (err, result)
  */
 function add(product, callback) {
     const { productName, category, quantity, price, image } = product;
@@ -37,9 +32,6 @@ function add(product, callback) {
 
 /**
  * Update product information
- * @param {Number} id - Product ID
- * @param {Object} product - Product object { productName, category, quantity, price, image }
- * @param {Function} callback - Callback function (err, result)
  */
 function updateById(id, product, callback) {
     const { productName, category, quantity, price, image } = product;
@@ -49,8 +41,6 @@ function updateById(id, product, callback) {
 
 /**
  * Delete product
- * @param {Number} id - Product ID
- * @param {Function} callback - Callback function (err, result)
  */
 function deleteById(id, callback) {
     const sql = 'DELETE FROM products WHERE id = ?';

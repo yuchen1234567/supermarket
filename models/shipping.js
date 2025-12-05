@@ -6,8 +6,6 @@ const db = require('../db');
 
 /**
  * Create new shipment record for an order
- * @param {Object} shipmentData - Shipment data
- * @param {Function} callback - Callback function (err, result)
  */
 function create(shipmentData, callback) {
     const sql = `
@@ -58,8 +56,6 @@ function create(shipmentData, callback) {
 
 /**
  * Get shipment by order ID
- * @param {Number} orderId - Order ID
- * @param {Function} callback - Callback function (err, shipment)
  */
 function getByOrderId(orderId, callback) {
     const sql = `
@@ -76,8 +72,6 @@ function getByOrderId(orderId, callback) {
 
 /**
  * Get shipment by tracking number
- * @param {String} trackingNumber - Tracking number
- * @param {Function} callback - Callback function (err, shipment)
  */
 function getByTrackingNumber(trackingNumber, callback) {
     const sql = `
@@ -96,8 +90,6 @@ function getByTrackingNumber(trackingNumber, callback) {
 
 /**
  * Get all shipments (admin)
- * @param {String} searchQuery - Search query (optional)
- * @param {Function} callback - Callback function (err, shipments)
  */
 function getAll(searchQuery, callback) {
     // If only one argument provided, it's the callback
@@ -136,11 +128,6 @@ function getAll(searchQuery, callback) {
 
 /**
  * Update shipment status
- * @param {Number} shipmentId - Shipment ID
- * @param {String} status - New status
- * @param {String} location - Current location (optional)
- * @param {String} description - Status description (optional)
- * @param {Function} callback - Callback function (err, result)
  */
 function updateStatus(shipmentId, status, location, description, callback) {
     const sql = 'UPDATE shipments SET status = ?, updated_at = NOW() WHERE id = ?';
@@ -171,9 +158,6 @@ function updateStatus(shipmentId, status, location, description, callback) {
 
 /**
  * Update shipment details
- * @param {Number} shipmentId - Shipment ID
- * @param {Object} updateData - Data to update
- * @param {Function} callback - Callback function (err, result)
  */
 function update(shipmentId, updateData, callback) {
     const fields = [];
@@ -214,9 +198,6 @@ function update(shipmentId, updateData, callback) {
 
 /**
  * Add tracking record to shipping_tracking table
- * @param {Number} shipmentId - Shipment ID
- * @param {Object} trackingData - Tracking data {status, location, description}
- * @param {Function} callback - Callback function (err, result)
  */
 function addTrackingRecord(shipmentId, trackingData, callback) {
     const sql = `
@@ -236,8 +217,6 @@ function addTrackingRecord(shipmentId, trackingData, callback) {
 
 /**
  * Get tracking history for a shipment
- * @param {Number} shipmentId - Shipment ID
- * @param {Function} callback - Callback function (err, trackingHistory)
  */
 function getTrackingHistory(shipmentId, callback) {
     const sql = `
@@ -251,7 +230,6 @@ function getTrackingHistory(shipmentId, callback) {
 
 /**
  * Generate unique tracking number
- * @param {Number} orderId - Order ID
  * @returns {String} Tracking number
  */
 function generateTrackingNumber(orderId) {
@@ -262,8 +240,6 @@ function generateTrackingNumber(orderId) {
 
 /**
  * Get shipment with tracking history
- * @param {Number} shipmentId - Shipment ID
- * @param {Function} callback - Callback function (err, shipmentWithTracking)
  */
 function getWithTracking(shipmentId, callback) {
     const sql = 'SELECT * FROM shipments WHERE id = ?';
@@ -285,8 +261,6 @@ function getWithTracking(shipmentId, callback) {
 
 /**
  * Delete shipment
- * @param {Number} shipmentId - Shipment ID
- * @param {Function} callback - Callback function (err, result)
  */
 function deleteById(shipmentId, callback) {
     // Tracking records will be deleted automatically due to CASCADE

@@ -6,8 +6,6 @@ const db = require('../db');
 
 /**
  * Create new address for user
- * @param {Object} addressData - Address data
- * @param {Function} callback - Callback function (err, result)
  */
 function create(addressData, callback) {
     // If this is set as default, unset other default addresses first
@@ -52,8 +50,6 @@ function insertAddress(addressData, callback) {
 
 /**
  * Get all addresses for a user
- * @param {Number} userId - User ID
- * @param {Function} callback - Callback function (err, addresses)
  */
 function getByUserId(userId, callback) {
     const sql = `
@@ -67,8 +63,6 @@ function getByUserId(userId, callback) {
 
 /**
  * Get address by ID
- * @param {Number} addressId - Address ID
- * @param {Function} callback - Callback function (err, address)
  */
 function getById(addressId, callback) {
     const sql = 'SELECT * FROM user_addresses WHERE id = ? LIMIT 1';
@@ -81,8 +75,6 @@ function getById(addressId, callback) {
 
 /**
  * Get default address for user
- * @param {Number} userId - User ID
- * @param {Function} callback - Callback function (err, address)
  */
 function getDefaultByUserId(userId, callback) {
     const sql = `
@@ -114,9 +106,6 @@ function getDefaultByUserId(userId, callback) {
 
 /**
  * Update address
- * @param {Number} addressId - Address ID
- * @param {Object} addressData - Address data to update
- * @param {Function} callback - Callback function (err, result)
  */
 function update(addressId, addressData, callback) {
     // If setting as default, first get the user_id to unset other defaults
@@ -175,9 +164,6 @@ function performUpdate(addressId, addressData, callback) {
 
 /**
  * Set address as default
- * @param {Number} addressId - Address ID
- * @param {Number} userId - User ID
- * @param {Function} callback - Callback function (err, result)
  */
 function setDefault(addressId, userId, callback) {
     // First unset all defaults for this user
@@ -194,9 +180,6 @@ function setDefault(addressId, userId, callback) {
 
 /**
  * Delete address
- * @param {Number} addressId - Address ID
- * @param {Number} userId - User ID (for security check)
- * @param {Function} callback - Callback function (err, result)
  */
 function deleteById(addressId, userId, callback) {
     // Check if this is the default address
@@ -235,7 +218,6 @@ function deleteById(addressId, userId, callback) {
 
 /**
  * Format address as string
- * @param {Object} address - Address object
  * @returns {String} Formatted address
  */
 function formatAddress(address) {

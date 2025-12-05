@@ -7,7 +7,6 @@ const db = require('../db');  // Database connection
 module.exports = {
     /**
      * Get all users
-     * @param {Function} callback - Callback function (err, users)
      */
     getAll: function(callback) {
         const sql = 'SELECT id, username, email FROM users';
@@ -18,8 +17,6 @@ module.exports = {
 
     /**
      * Get single user by ID
-     * @param {Number} id - User ID
-     * @param {Function} callback - Callback function (err, user)
      */
     getById: function(id, callback) {
         const sql = 'SELECT id, username, email FROM users WHERE id = ? LIMIT 1';
@@ -31,9 +28,6 @@ module.exports = {
 
     /**
      * Update user information
-     * @param {Number} id - User ID
-     * @param {Object} user - User object { username, email, password }
-     * @param {Function} callback - Callback function (err, result)
      */
     update: function(id, user, callback) {
         const sql = 'UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?';
@@ -45,8 +39,6 @@ module.exports = {
 
     /**
      * Delete user
-     * @param {Number} id - User ID
-     * @param {Function} callback - Callback function (err, result)
      */
     delete: function(id, callback) {
         const sql = 'DELETE FROM users WHERE id = ?';

@@ -9,8 +9,6 @@ const db = require('../db');  // Database connection
 const cartModel = {
   /**
    * Get user's shopping cart from database
-   * @param {Number} userId - User ID
-   * @param {Function} callback - Callback function (err, cartItems)
    */
   getCart(userId, callback) {
     const sql = `
@@ -40,10 +38,6 @@ const cartModel = {
   /**
    * Add or update product in cart (database)
    * If product exists, increase quantity; otherwise add new item
-   * @param {Number} userId - User ID
-   * @param {Number} productId - Product ID
-   * @param {Number} quantity - Quantity
-   * @param {Function} callback - Callback function (err, result)
    */
   addItem(userId, productId, quantity, callback) {
     // Check if item already exists in cart
@@ -70,10 +64,6 @@ const cartModel = {
 
   /**
    * Update cart item quantity
-   * @param {Number} userId - User ID
-   * @param {Number} productId - Product ID
-   * @param {Number} newQuantity - New quantity
-   * @param {Function} callback - Callback function (err, result)
    */
   updateQuantity(userId, productId, newQuantity, callback) {
     const sql = 'UPDATE cart SET quantity = ? WHERE users_id = ? AND products_id = ?';
@@ -82,9 +72,6 @@ const cartModel = {
 
   /**
    * Remove product from cart (database)
-   * @param {Number} userId - User ID
-   * @param {Number} productId - Product ID to remove
-   * @param {Function} callback - Callback function (err, result)
    */
   removeItem(userId, productId, callback) {
     const sql = 'DELETE FROM cart WHERE users_id = ? AND products_id = ?';
@@ -93,8 +80,6 @@ const cartModel = {
 
   /**
    * Clear all items in user's cart (database)
-   * @param {Number} userId - User ID
-   * @param {Function} callback - Callback function (err, result)
    */
   clearCart(userId, callback) {
     const sql = 'DELETE FROM cart WHERE users_id = ?';

@@ -8,10 +8,6 @@ const db = require('../db');  // Database connection
 /**
  * Create new order
  * First create main order record, then insert order items
- * @param {Number} userId - User ID
- * @param {Number} total - Order total price
- * @param {Array} items - Order items array
- * @param {Function} callback - Callback function (err, result)
  */
 function create(userId, total, items, callback) {
     // Insert main order record
@@ -62,8 +58,6 @@ function create(userId, total, items, callback) {
 
 /**
  * Update product stock based on items in an order.
- * @param {Array} items - Order items array
- * @param {Function} callback - Callback function (err)
  */
 function updateProductStock(items, callback) {
     if (!items || items.length === 0) {
@@ -100,9 +94,6 @@ function updateProductStock(items, callback) {
 /**
  * Get all orders for a user
  * Query order list for specified user, including order item count
- * @param {Number} userId - User ID
- * @param {String} searchQuery - Search query (optional) - searches in order ID, status
- * @param {Function} callback - Callback function (err, orders)
  */
 function getByUserId(userId, searchQuery, callback) {
     // If only two arguments are provided, second is the callback (backward compatible)
@@ -139,8 +130,6 @@ function getByUserId(userId, searchQuery, callback) {
 /**
  * Get all orders (admin only)
  * Query all orders in system, including user info and item count
- * @param {String} searchQuery - Search query (optional) - searches in order ID, username, email, status
- * @param {Function} callback - Callback function (err, orders)
  */
 function getAll(searchQuery, callback) {
     // If only one argument is provided, it's the callback (backward compatible)
@@ -186,8 +175,6 @@ function getAll(searchQuery, callback) {
 /**
  * Get order details by ID
  * Query main order info and all order items
- * @param {Number} orderId - Order ID
- * @param {Function} callback - Callback function (err, order)
  */
 function getById(orderId, callback) {
     // Query main order info and user info
@@ -222,9 +209,6 @@ function getById(orderId, callback) {
 
 /**
  * Update order status
- * @param {Number} orderId - Order ID
- * @param {String} status - New status
- * @param {Function} callback - Callback function (err, result)
  */
 function updateStatus(orderId, status, callback) {
     const sql = 'UPDATE orders SET status = ? WHERE id = ?';
@@ -234,8 +218,6 @@ function updateStatus(orderId, status, callback) {
 /**
  * Delete order
  * First delete order items, then delete main order record
- * @param {Number} orderId - Order ID
- * @param {Function} callback - Callback function (err, result)
  */
 function deleteById(orderId, callback) {
     // First delete order items
