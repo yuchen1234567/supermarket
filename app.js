@@ -96,6 +96,10 @@ const addressControllers = require('./controllers/addressControllers');
 
 // Import wallet controllers
 const walletControllers = require('./controllers/walletControllers');
+const refundControllers = require('./controllers/refundControllers');
+const transactionControllers = require('./controllers/transactionControllers');
+const shippingTrackingControllers = require('./controllers/shippingTrackingControllers');
+const orderItemControllers = require('./controllers/orderItemControllers');
 
 // ========================================
 // Route Definitions
@@ -148,6 +152,10 @@ app.post('/admin/shipment/:id/status', checkAuthenticated, checkAdmin, shippingC
 
 // Update shipment details (admin)
 app.post('/admin/shipment/:id/update', checkAuthenticated, checkAdmin, shippingControllers.updateShipment);
+
+// Add tracking update (admin) and view tracking history (JSON)
+app.post('/admin/shipment/:id/tracking', checkAuthenticated, checkAdmin, shippingTrackingControllers.addTrackingUpdate);
+app.get('/admin/shipment/:id/tracking', checkAuthenticated, checkAdmin, shippingTrackingControllers.getTrackingHistory);
 
 
 // Default themes for known categories on the homepage
@@ -625,6 +633,15 @@ app.get('/admin/shipment/:id', checkAuthenticated, checkAdmin, shippingControlle
 // Admin: Update shipment status
 app.post('/admin/shipment/:id/status', checkAuthenticated, checkAdmin, shippingControllers.updateShipmentStatus);
 
+// Admin: Update shipment details
+app.post('/admin/shipment/:id/update', checkAuthenticated, checkAdmin, shippingControllers.updateShipment);
+
+// Admin: Add tracking update (shipping_tracking)
+app.post('/admin/shipment/:id/tracking', checkAuthenticated, checkAdmin, shippingTrackingControllers.addTrackingUpdate);
+
+// Tracking history (JSON)
+app.get('/admin/shipment/:id/tracking', checkAuthenticated, checkAdmin, shippingTrackingControllers.getTrackingHistory);
+
 // Address management routes
 app.get('/addresses', checkAuthenticated, addressControllers.listAddresses);
 app.get('/addresses/add', checkAuthenticated, addressControllers.showAddForm);
@@ -641,17 +658,20 @@ app.post('/addresses/delete/:id', checkAuthenticated, addressControllers.deleteA
 // Wallet management
 app.get('/wallet', checkAuthenticated, walletControllers.viewWallet);
 app.post('/wallet/recharge', checkAuthenticated, walletControllers.recharge);
-app.get('/wallet/transactions', checkAuthenticated, walletControllers.viewTransactions);
+app.get('/wallet/transactions', checkAuthenticated, transactionControllers.listUserTransactions);
 
 // Refund management
-app.post('/order/:orderId/request-refund', checkAuthenticated, walletControllers.requestRefund);
-app.get('/wallet/refunds', checkAuthenticated, walletControllers.viewMyRefunds);
+app.post('/order/:orderId/request-refund', checkAuthenticated, refundControllers.requestRefund);
+app.get('/wallet/refunds', checkAuthenticated, refundControllers.viewMyRefunds);
 app.post('/order/:orderId/confirm-delivery', checkAuthenticated, walletControllers.confirmDelivery);
 
 // Admin: Refund management
-app.get('/admin/refunds', checkAuthenticated, checkAdmin, walletControllers.viewAllRefunds);
-app.get('/admin/refund/:id', checkAuthenticated, checkAdmin, walletControllers.viewRefundDetails);
-app.post('/admin/refund/:id/process', checkAuthenticated, checkAdmin, walletControllers.processRefund);
+app.get('/admin/refunds', checkAuthenticated, checkAdmin, refundControllers.viewAllRefunds);
+app.get('/admin/refund/:id', checkAuthenticated, checkAdmin, refundControllers.viewRefundDetails);
+app.post('/admin/refund/:id/process', checkAuthenticated, checkAdmin, refundControllers.processRefund);
+
+// Admin: Transactions view
+app.get('/admin/transactions', checkAuthenticated, checkAdmin, transactionControllers.listAllTransactions);
 
 // ========================================
 // Start Server

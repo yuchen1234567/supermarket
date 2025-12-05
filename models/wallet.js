@@ -3,6 +3,7 @@
  */
 
 const db = require('../db');
+const Transaction = require('./transaction');
 
 const Wallet = {
     /**
@@ -103,20 +104,22 @@ const Wallet = {
                         }
 
                         // Record transaction
-                        const transSql = `
-                            INSERT INTO transactions 
-                            (user_id, order_id, type, amount, balance_before, balance_after, description)
-                            VALUES (?, ?, 'purchase', ?, ?, ?, ?)
-                        `;
                         const description = `Payment for order #${orderId}`;
-                        connection.query(transSql, [userId, orderId, -amount, balanceBefore, balanceAfter, description], (err) => {
+                        Transaction.create({
+                            user_id: userId,
+                            order_id: orderId,
+                            type: 'purchase',
+                            amount: -amount,
+                            balance_before: balanceBefore,
+                            balance_after: balanceAfter,
+                            description
+                        }, (err) => {
                             if (err) {
                                 return connection.rollback(() => {
                                     connection.release();
                                     callback(err);
                                 });
                             }
-
                             connection.commit((err) => {
                                 if (err) {
                                     return connection.rollback(() => {
@@ -127,7 +130,7 @@ const Wallet = {
                                 connection.release();
                                 callback(null, { success: true, balanceAfter });
                             });
-                        });
+                        }, connection);
                     });
                 });
             });
@@ -186,20 +189,22 @@ const Wallet = {
                             }
 
                             // Record admin's income transaction
-                            const transSql = `
-                                INSERT INTO transactions 
-                                (user_id, order_id, type, amount, balance_before, balance_after, description)
-                                VALUES (?, ?, 'income', ?, ?, ?, ?)
-                            `;
                             const description = `Income from order #${orderId} (confirmed delivery)`;
-                            connection.query(transSql, [adminId, orderId, amount, adminBalanceBefore, adminBalanceAfter, description], (err) => {
+                            Transaction.create({
+                                user_id: adminId,
+                                order_id: orderId,
+                                type: 'income',
+                                amount,
+                                balance_before: adminBalanceBefore,
+                                balance_after: adminBalanceAfter,
+                                description
+                            }, (err) => {
                                 if (err) {
                                     return connection.rollback(() => {
                                         connection.release();
                                         callback(err);
                                     });
                                 }
-
                                 connection.commit((err) => {
                                     if (err) {
                                         return connection.rollback(() => {
@@ -210,7 +215,7 @@ const Wallet = {
                                     connection.release();
                                     callback(null, { success: true });
                                 });
-                            });
+                            }, connection);
                         });
                     });
                 });
@@ -261,20 +266,22 @@ const Wallet = {
                         }
 
                         // Record refund transaction
-                        const transSql = `
-                            INSERT INTO transactions 
-                            (user_id, order_id, type, amount, balance_before, balance_after, description)
-                            VALUES (?, ?, 'refund', ?, ?, ?, ?)
-                        `;
                         const description = `Refund for order #${orderId}`;
-                        connection.query(transSql, [userId, orderId, amount, balanceBefore, balanceAfter, description], (err) => {
+                        Transaction.create({
+                            user_id: userId,
+                            order_id: orderId,
+                            type: 'refund',
+                            amount,
+                            balance_before: balanceBefore,
+                            balance_after: balanceAfter,
+                            description
+                        }, (err) => {
                             if (err) {
                                 return connection.rollback(() => {
                                     connection.release();
                                     callback(err);
                                 });
                             }
-
                             connection.commit((err) => {
                                 if (err) {
                                     return connection.rollback(() => {
@@ -285,7 +292,7 @@ const Wallet = {
                                 connection.release();
                                 callback(null, { success: true, balanceAfter });
                             });
-                        });
+                        }, connection);
                     });
                 });
             });
@@ -340,19 +347,20 @@ const Wallet = {
                                 });
                             }
 
-                            const transSql = `
-                                INSERT INTO transactions 
-                                (user_id, type, amount, balance_before, balance_after, description)
-                                VALUES (?, 'recharge', ?, ?, ?, ?)
-                            `;
-                            connection.query(transSql, [userId, amount, balanceBefore, balanceAfter, description || 'Wallet recharge'], (err) => {
+                            Transaction.create({
+                                user_id: userId,
+                                type: 'recharge',
+                                amount,
+                                balance_before: balanceBefore,
+                                balance_after: balanceAfter,
+                                description: description || 'Wallet recharge'
+                            }, (err) => {
                                 if (err) {
                                     return connection.rollback(() => {
                                         connection.release();
                                         callback(err);
                                     });
                                 }
-
                                 connection.commit((err) => {
                                     if (err) {
                                         return connection.rollback(() => {
@@ -363,7 +371,7 @@ const Wallet = {
                                     connection.release();
                                     callback(null, { success: true, balanceAfter });
                                 });
-                            });
+                            }, connection);
                         });
                     });
                 });
@@ -375,15 +383,7 @@ const Wallet = {
      * Get transaction history
      */
     getTransactions: (userId, limit = 50, callback) => {
-        const sql = `
-            SELECT t.*, o.id as order_number 
-            FROM transactions t
-            LEFT JOIN orders o ON t.order_id = o.id
-            WHERE t.user_id = ?
-            ORDER BY t.created_at DESC
-            LIMIT ?
-        `;
-        db.query(sql, [userId, limit], callback);
+        Transaction.listByUser(userId, limit, callback);
     }
 };
 

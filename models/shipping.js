@@ -3,6 +3,7 @@
 // Handles database operations related to shipping and delivery
 // ========================================
 const db = require('../db');
+const trackingModel = require('./shippingTracking');
 
 /**
  * Create new shipment record for an order
@@ -41,7 +42,8 @@ function create(shipmentData, callback) {
         
         // Add initial tracking record
         if (result.insertId) {
-            addTrackingRecord(result.insertId, {
+            trackingModel.create({
+                shipment_id: result.insertId,
                 status: shipmentData.status || 'pending',
                 location: 'FreshMart Warehouse',
                 description: 'Order received and waiting for processing'
@@ -136,7 +138,8 @@ function updateStatus(shipmentId, status, location, description, callback) {
         if (err) return callback(err);
         
         // Add tracking record
-        addTrackingRecord(shipmentId, {
+        trackingModel.create({
+            shipment_id: shipmentId,
             status: status,
             location: location || null,
             description: description || `Status updated to: ${status}`
@@ -200,32 +203,19 @@ function update(shipmentId, updateData, callback) {
  * Add tracking record to shipping_tracking table
  */
 function addTrackingRecord(shipmentId, trackingData, callback) {
-    const sql = `
-        INSERT INTO shipping_tracking (shipment_id, status, location, description, timestamp)
-        VALUES (?, ?, ?, ?, NOW())
-    `;
-    
-    const params = [
-        shipmentId,
-        trackingData.status,
-        trackingData.location || null,
-        trackingData.description || null
-    ];
-    
-    db.query(sql, params, callback);
+    trackingModel.create({
+        shipment_id: shipmentId,
+        status: trackingData.status,
+        location: trackingData.location,
+        description: trackingData.description
+    }, callback);
 }
 
 /**
  * Get tracking history for a shipment
  */
 function getTrackingHistory(shipmentId, callback) {
-    const sql = `
-        SELECT * FROM shipping_tracking 
-        WHERE shipment_id = ? 
-        ORDER BY timestamp ASC
-    `;
-    
-    db.query(sql, [shipmentId], callback);
+    trackingModel.listByShipmentId(shipmentId, callback);
 }
 
 /**

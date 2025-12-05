@@ -4,6 +4,7 @@
 // Tables involved: orders (main table) and order_items (detail table)
 // ========================================
 const db = require('../db');  // Database connection
+const OrderItem = require('./orderItem');
 
 /**
  * Create new order
@@ -23,24 +24,19 @@ function create(userId, total, items, callback) {
 
         // Insert order items
         if (items && items.length > 0) {
-            // Prepare order items data
-            const itemsValues = items.map(item => [
-                orderId,
-                item.productId,
-                item.productName || 'Unknown Product',
-                item.price,
-                item.quantity
-            ]);
+            const formattedItems = items.map(item => ({
+                product_id: item.productId,
+                product_name: item.productName || 'Unknown Product',
+                price: item.price,
+                quantity: item.quantity
+            }));
 
-            // Batch insert order items
-            const itemsSql = 'INSERT INTO order_items (order_id, product_id, product_name, price, quantity) VALUES ?';
-            db.query(itemsSql, [itemsValues], (err) => {
+            OrderItem.bulkCreate(orderId, formattedItems, (err) => {
                 if (err) {
                     console.error('Error inserting order items:', err);
                     return callback(err);
                 }
 
-                // Update product stock after inserting order_items
                 updateProductStock(items, (stockErr) => {
                     if (stockErr) {
                         console.error('Error updating product stock:', stockErr);
@@ -191,15 +187,7 @@ function getById(orderId, callback) {
 
         const order = orderResults[0];
 
-        // Query order items
-        const itemsSql = `
-            SELECT oi.*, p.productName, p.image
-            FROM order_items oi
-            LEFT JOIN products p ON oi.product_id = p.id
-            WHERE oi.order_id = ?
-        `;
-
-        db.query(itemsSql, [orderId], (err, items) => {
+        OrderItem.findDetailedByOrderId(orderId, (err, items) => {
             if (err) return callback(err);
             order.items = items;  // Add items to order object
             callback(null, order);
@@ -220,12 +208,9 @@ function updateStatus(orderId, status, callback) {
  * First delete order items, then delete main order record
  */
 function deleteById(orderId, callback) {
-    // First delete order items
-    const deleteItemsSql = 'DELETE FROM order_items WHERE order_id = ?';
-    db.query(deleteItemsSql, [orderId], (err) => {
+    OrderItem.deleteByOrderId(orderId, (err) => {
         if (err) return callback(err);
 
-        // Then delete main order record
         const deleteOrderSql = 'DELETE FROM orders WHERE id = ?';
         db.query(deleteOrderSql, [orderId], (err, result) => callback(err, result));
     });
