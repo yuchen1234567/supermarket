@@ -78,6 +78,7 @@
         .transaction-icon.refund { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
         .amount-income { color: var(--primary); font-weight: bold; }
         .amount-expense { color: #ef4444; font-weight: bold; }
+        .amount-pending { color: #f59e0b; font-weight: bold; }
         .btn-recharge {
             background: white;
             color: #667eea;
@@ -92,6 +93,44 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(0,0,0,0.15);
         }
+        .payment-options {
+            display: grid;
+            gap: 10px;
+        }
+        .payment-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .payment-option:hover {
+            border-color: var(--primary);
+            background: rgba(102, 126, 234, 0.06);
+        }
+        .payment-option input {
+            margin: 0;
+            width: 18px;
+            height: 18px;
+        }
+        .payment-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            height: 28px;
+            padding: 0 10px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+        }
+        .payment-badge.alipay { background: #1677ff; }
+        .payment-badge.paypal { background: #003087; }
+        .payment-badge.nets { background: #e11d48; }
     </style>
 </head>
 <body>
@@ -123,7 +162,7 @@
                     <% } %>
                 </div>
                 <div>
-                    <button class="btn-recharge" onclick="document.getElementById('rechargeModal').style.display='block'">
+                    <button class="btn-recharge" onclick="openRechargeModal()">
                         <i class="fas fa-plus-circle"></i> Recharge
                     </button>
                 </div>
@@ -156,6 +195,7 @@
             
             <% if (transactions && transactions.length > 0) { %>
                 <% transactions.forEach(trans => { %>
+                    <% const isPending = (trans.status || '').toString().toLowerCase() === 'pending'; %>
                     <div class="transaction-item">
                         <div style="display: flex; align-items: center; flex: 1;">
                             <div class="transaction-icon <%= trans.type %>">
@@ -179,7 +219,7 @@
                             </div>
                         </div>
                         <div style="text-align: right;">
-                            <div class="<%= trans.amount > 0 ? 'amount-income' : 'amount-expense' %>" style="font-size: 20px;">
+                            <div class="<%= isPending ? 'amount-pending' : (trans.amount > 0 ? 'amount-income' : 'amount-expense') %>" style="font-size: 20px;">
                                 <%= trans.amount > 0 ? '+' : '' %>$<%= Math.abs(trans.amount).toFixed(2) %>
                             </div>
                             <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
@@ -217,32 +257,319 @@
     </div>
     
     <!-- Recharge Modal -->
-    <div id="rechargeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;" onclick="if(event.target === this) this.style.display='none'">
+    <div id="rechargeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;" onclick="if(event.target === this) closeRechargeModal()">
         <div style="background: white; padding: 40px; border-radius: 15px; max-width: 500px; width: 90%;" onclick="event.stopPropagation()">
             <h2 style="margin-bottom: 20px;"><i class="fas fa-plus-circle"></i> Recharge Wallet</h2>
-            <form action="/wallet/recharge" method="POST">
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 10px; font-weight: 600;">Amount (USD)</label>
-                    <input type="number" name="amount" step="0.01" min="1" max="10000" required 
-                           style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px;">
-                    <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Min: $1.00, Max: $10,000.00</div>
+            <div id="rechargeFormPane">
+                <form id="rechargeForm" action="/wallet/recharge" method="POST">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: 600;">Amount (USD)</label>
+                        <input id="rechargeAmount" type="number" name="amount" step="0.01" min="1" max="10000" required 
+                               style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px;">
+                        <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Min: $1.00, Max: $10,000.00</div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: 600;">Payment Method</label>
+                        <div class="payment-options">
+                            <label class="payment-option" for="payment-alipay">
+                                <input id="payment-alipay" type="radio" name="paymentMethod" value="alipay" checked required>
+                                <span class="payment-badge alipay">Alipay</span>
+                                <span style="font-weight: 600;">Alipay</span>
+                            </label>
+                        
+                            <label class="payment-option" for="payment-paypal">
+                                <input id="payment-paypal" type="radio" name="paymentMethod" value="paypal" required>
+                                <span class="payment-badge paypal">PayPal</span>
+                                <span style="font-weight: 600;">Paypal</span>
+                            </label>
+                            <label class="payment-option" for="payment-nets">
+                                <input id="payment-nets" type="radio" name="paymentMethod" value="nets" required>
+                                <span class="payment-badge nets">NETS</span>
+                                <span style="font-weight: 600;">NETS</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="rechargeFormError" style="display:none; background: rgba(239, 68, 68, 0.10); color: #991b1b; padding: 10px 12px; border-radius: 10px; font-weight: 700;"></div>
+                    <div style="display: flex; gap: 10px; margin-top: 30px;">
+                        <button type="button" onclick="closeRechargeModal()" 
+                                style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; background: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            Cancel
+                        </button>
+                        <button id="rechargeSubmitBtn" type="submit" 
+                                style="flex: 1; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            <i class="fas fa-check"></i> Confirm Recharge
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="rechargePendingPane" style="display:none;">
+                <div style="background: rgba(245, 158, 11, 0.12); color: #92400e; padding: 12px 14px; border-radius: 10px; font-weight: 800; margin-bottom: 14px;" id="rechargePendingStatus">
+                    Preparing payment...
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 30px;">
-                    <button type="button" onclick="document.getElementById('rechargeModal').style.display='none'" 
-                            style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; background: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                        Cancel
+
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid #f0f0f0;">
+                    <div style="color: #6c757d;">Out Trade No</div>
+                    <div style="font-weight: 800;" id="rechargeOutTradeNo">-</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid #f0f0f0;">
+                    <div style="color: #6c757d;">Amount</div>
+                    <div style="font-weight: 800;" id="rechargePendingAmount">-</div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap;">
+                    <button type="button" onclick="closeRechargeModal()"
+                            style="flex: 1; min-width: 120px; padding: 12px; border: 2px solid #e0e0e0; background: white; border-radius: 8px; cursor: pointer; font-weight: 700;">
+                        Close
                     </button>
-                    <button type="submit" 
-                            style="flex: 1; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                        <i class="fas fa-check"></i> Confirm Recharge
+                    <button type="button" onclick="reopenPaymentTab()"
+                            style="flex: 1; min-width: 160px; padding: 12px; border: 2px solid #e0e0e0; background: white; border-radius: 8px; cursor: pointer; font-weight: 700;">
+                        Open Payment Again
+                    </button>
+                    <button type="button" onclick="checkRechargeNow()"
+                            style="flex: 1; min-width: 140px; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700;">
+                        Check Now
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
     
     <%- include('partials/footer', { user: user }) %>
     
+    <script>
+        const rechargeModalEl = document.getElementById('rechargeModal');
+        const rechargeFormEl = document.getElementById('rechargeForm');
+        const rechargeFormPaneEl = document.getElementById('rechargeFormPane');
+        const rechargePendingPaneEl = document.getElementById('rechargePendingPane');
+        const rechargeAmountEl = document.getElementById('rechargeAmount');
+        const rechargeSubmitBtnEl = document.getElementById('rechargeSubmitBtn');
+        const rechargeFormErrorEl = document.getElementById('rechargeFormError');
+        const rechargePendingStatusEl = document.getElementById('rechargePendingStatus');
+        const rechargeOutTradeNoEl = document.getElementById('rechargeOutTradeNo');
+        const rechargePendingAmountEl = document.getElementById('rechargePendingAmount');
+
+        let rechargePollTimer = null;
+        let rechargeSse = null;
+        let rechargeOutTradeNo = null;
+        let rechargePayUrl = null;
+        let rechargePaymentMethod = null;
+        let rechargeConsecutiveErrors = 0;
+
+        function openRechargeModal() {
+            rechargeModalEl.style.display = 'flex';
+            resetRechargeModal();
+        }
+
+        function closeRechargeModal() {
+            stopRechargePolling();
+            rechargeModalEl.style.display = 'none';
+            resetRechargeModal();
+        }
+
+        function resetRechargeModal() {
+            rechargeFormPaneEl.style.display = 'block';
+            rechargePendingPaneEl.style.display = 'none';
+            rechargeFormErrorEl.style.display = 'none';
+            rechargeFormErrorEl.textContent = '';
+            rechargePendingStatusEl.textContent = 'Preparing payment...';
+            rechargePendingStatusEl.style.background = 'rgba(245, 158, 11, 0.12)';
+            rechargePendingStatusEl.style.color = '#92400e';
+            rechargeOutTradeNoEl.textContent = '-';
+            rechargePendingAmountEl.textContent = '-';
+
+            rechargeSubmitBtnEl.disabled = false;
+            rechargeSubmitBtnEl.style.opacity = '1';
+            rechargeSubmitBtnEl.style.cursor = 'pointer';
+
+            rechargeOutTradeNo = null;
+            rechargePayUrl = null;
+            rechargePaymentMethod = null;
+            rechargeConsecutiveErrors = 0;
+        }
+
+        function stopRechargePolling() {
+            if (rechargePollTimer) {
+                clearInterval(rechargePollTimer);
+                rechargePollTimer = null;
+            }
+            if (rechargeSse) {
+                try { rechargeSse.close(); } catch (e) {}
+                rechargeSse = null;
+            }
+        }
+
+        function setRechargePendingStatus(text, type) {
+            rechargePendingStatusEl.textContent = text;
+            if (type === 'paid') {
+                rechargePendingStatusEl.style.background = 'rgba(16, 185, 129, 0.12)';
+                rechargePendingStatusEl.style.color = '#065f46';
+            } else if (type === 'error') {
+                rechargePendingStatusEl.style.background = 'rgba(239, 68, 68, 0.12)';
+                rechargePendingStatusEl.style.color = '#991b1b';
+            } else {
+                rechargePendingStatusEl.style.background = 'rgba(245, 158, 11, 0.12)';
+                rechargePendingStatusEl.style.color = '#92400e';
+            }
+        }
+
+        function showRechargeError(text) {
+            rechargeFormErrorEl.textContent = text;
+            rechargeFormErrorEl.style.display = 'block';
+        }
+
+        function reopenPaymentTab() {
+            if (!rechargePayUrl) return;
+            window.open(rechargePayUrl, '_blank', 'noopener');
+        }
+
+        async function checkRechargeNow() {
+            if (!rechargeOutTradeNo) return;
+
+            try {
+                const statusPath = rechargePaymentMethod === 'paypal'
+                    ? '/paypal/status'
+                    : (rechargePaymentMethod === 'nets' ? '/nets/status' : '/alipay/status');
+                const resp = await fetch(`${statusPath}?out_trade_no=${encodeURIComponent(rechargeOutTradeNo)}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await resp.json();
+                if (!data || !data.ok) {
+                    rechargeConsecutiveErrors += 1;
+                    setRechargePendingStatus((data && data.error) ? data.error : 'Failed to check status', 'error');
+                    return;
+                }
+
+                rechargeConsecutiveErrors = 0;
+                if (data.paid) {
+                    stopRechargePolling();
+                    setRechargePendingStatus('Payment successful. Updating wallet...', 'paid');
+                    const finishPath = rechargePaymentMethod === 'paypal'
+                        ? '/paypal/finish'
+                        : (rechargePaymentMethod === 'nets' ? '/nets/finish' : '/alipay/finish');
+                    window.location.href = `${finishPath}?out_trade_no=${encodeURIComponent(rechargeOutTradeNo)}`;
+                    return;
+                }
+
+                const providerStatus = data.tradeStatus || data.orderStatus || data.txnStatus || data.actionCode || null;
+                const statusText = providerStatus ? ` (${providerStatus})` : '';
+                setRechargePendingStatus(`Waiting for payment...${statusText}`, 'pending');
+            } catch (e) {
+                rechargeConsecutiveErrors += 1;
+                setRechargePendingStatus('Network error while checking status', 'error');
+            }
+        }
+
+        rechargeFormEl.addEventListener('submit', async (e) => {
+            const methodEl = rechargeFormEl.querySelector('input[name="paymentMethod"]:checked');
+            const paymentMethod = methodEl ? methodEl.value : null;
+            if (paymentMethod !== 'alipay' && paymentMethod !== 'paypal' && paymentMethod !== 'nets' && paymentMethod !== 'alipay_face') return;
+
+            e.preventDefault();
+            rechargeFormErrorEl.style.display = 'none';
+            rechargeFormErrorEl.textContent = '';
+
+            const amount = parseFloat(rechargeAmountEl.value);
+            if (Number.isNaN(amount) || amount < 1 || amount > 10000) {
+                showRechargeError('Invalid amount. Min: $1.00, Max: $10,000.00');
+                return;
+            }
+
+            rechargeSubmitBtnEl.disabled = true;
+            rechargeSubmitBtnEl.style.opacity = '0.75';
+            rechargeSubmitBtnEl.style.cursor = 'not-allowed';
+
+                try {
+                const startPath = paymentMethod === 'paypal' ? '/paypal/start' : (paymentMethod === 'nets' ? '/nets/start' : (paymentMethod === 'alipay_face' ? '/alipay/face/start' : '/alipay/start'));
+                const providerName = paymentMethod === 'paypal' ? 'PayPal' : (paymentMethod === 'nets' ? 'NETS' : (paymentMethod === 'alipay_face' ? 'Alipay FacePay' : 'Alipay'));
+                const resp = await fetch(startPath, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                        'Accept': 'application/json'
+                    },
+                    body: new URLSearchParams({ amount: amount.toFixed(2) })
+                });
+                const data = await resp.json();
+                if (!data || !data.ok) {
+                    showRechargeError((data && data.error) ? data.error : `Failed to create ${providerName} payment`);
+                    rechargeSubmitBtnEl.disabled = false;
+                    rechargeSubmitBtnEl.style.opacity = '1';
+                    rechargeSubmitBtnEl.style.cursor = 'pointer';
+                    return;
+                }
+
+                rechargeOutTradeNo = data.outTradeNo;
+                rechargePayUrl = data.url;
+                rechargePaymentMethod = paymentMethod;
+
+                rechargeFormPaneEl.style.display = 'none';
+                rechargePendingPaneEl.style.display = 'block';
+                rechargeOutTradeNoEl.textContent = rechargeOutTradeNo;
+                rechargePendingAmountEl.textContent = `$${amount.toFixed(2)}`;
+                setRechargePendingStatus(`Opening ${providerName} in a new tab...`, 'pending');
+
+                const opened = window.open(rechargePayUrl, '_blank', 'noopener');
+                if (!opened) {
+                    setRechargePendingStatus('Popup blocked. Click "Open Payment Again". We will keep checking.', 'error');
+                } else {
+                    setRechargePendingStatus(`Please complete payment in ${providerName}. We are checking status...`, 'pending');
+                }
+
+                stopRechargePolling();
+                if (paymentMethod === 'nets' && data.sseUrl) {
+                    try {
+                        rechargeSse = new EventSource(data.sseUrl);
+                        rechargeSse.onmessage = (evt) => {
+                            let payload = null;
+                            try { payload = evt && evt.data ? JSON.parse(evt.data) : null; } catch (e) {}
+                            if (payload && payload.success) {
+                                stopRechargePolling();
+                                setRechargePendingStatus('Payment successful. Updating wallet...', 'paid');
+                                window.location.href = `/nets/finish?out_trade_no=${encodeURIComponent(rechargeOutTradeNo)}`;
+                                return;
+                            }
+                            if (payload && payload.fail) {
+                                stopRechargePolling();
+                                setRechargePendingStatus('Payment failed or timed out. Please try again.', 'error');
+                                return;
+                            }
+                            const dataObj = payload && payload.result && payload.result.data ? payload.result.data : null;
+                            const statusText = dataObj ? ` (code:${dataObj.response_code}, status:${dataObj.txn_status})` : '';
+                            setRechargePendingStatus(`Waiting for payment...${statusText}`, 'pending');
+                        };
+                        rechargeSse.onerror = () => {
+                            try { rechargeSse.close(); } catch (e) {}
+                            rechargeSse = null;
+                            rechargePollTimer = setInterval(() => {
+                                if (rechargeConsecutiveErrors >= 5) return;
+                                checkRechargeNow();
+                            }, 2000);
+                            checkRechargeNow();
+                        };
+                    } catch (e) {
+                        rechargePollTimer = setInterval(() => {
+                            if (rechargeConsecutiveErrors >= 5) return;
+                            checkRechargeNow();
+                        }, 2000);
+                        checkRechargeNow();
+                    }
+                } else {
+                    rechargePollTimer = setInterval(() => {
+                        if (rechargeConsecutiveErrors >= 5) return;
+                        checkRechargeNow();
+                    }, 2000);
+                    checkRechargeNow();
+                }
+            } catch (err) {
+                showRechargeError('Network error while creating payment');
+                rechargeSubmitBtnEl.disabled = false;
+                rechargeSubmitBtnEl.style.opacity = '1';
+                rechargeSubmitBtnEl.style.cursor = 'pointer';
+            }
+        });
+    </script>
     <script src="/js/main.js"></script>
 </body>
 </html>

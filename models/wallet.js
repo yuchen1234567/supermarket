@@ -303,10 +303,71 @@ const Wallet = {
         });
     },
 
+    // For external refunds: change available balance inside an existing DB transaction
+    debitBalanceInTx: (connection, userId, amount, callback) => {
+        const amt = parseFloat(amount);
+        if (Number.isNaN(amt) || amt <= 0) return callback(new Error('Invalid amount'));
+        if (!connection) return callback(new Error('Missing DB connection'));
+
+        const ensureWalletSql = `
+            INSERT INTO user_wallets (user_id, balance)
+            VALUES (?, 0)
+            ON DUPLICATE KEY UPDATE user_id = user_id
+        `;
+        connection.query(ensureWalletSql, [userId], (ensureErr) => {
+            if (ensureErr) return callback(ensureErr);
+
+            const lockSql = 'SELECT balance FROM user_wallets WHERE user_id = ? FOR UPDATE';
+            connection.query(lockSql, [userId], (err, rows) => {
+                if (err) return callback(err);
+                if (!rows || rows.length === 0) return callback(new Error('Wallet not found'));
+
+                const balanceBefore = parseFloat(rows[0].balance) || 0;
+                if (balanceBefore < amt) return callback(new Error('Insufficient balance'));
+
+                const balanceAfter = balanceBefore - amt;
+                const updateSql = 'UPDATE user_wallets SET balance = balance - ? WHERE user_id = ?';
+                connection.query(updateSql, [amt, userId], (updateErr) => {
+                    if (updateErr) return callback(updateErr);
+                    callback(null, { balanceBefore, balanceAfter });
+                });
+            });
+        });
+    },
+
+    creditBalanceInTx: (connection, userId, amount, callback) => {
+        const amt = parseFloat(amount);
+        if (Number.isNaN(amt) || amt <= 0) return callback(new Error('Invalid amount'));
+        if (!connection) return callback(new Error('Missing DB connection'));
+
+        const ensureWalletSql = `
+            INSERT INTO user_wallets (user_id, balance)
+            VALUES (?, 0)
+            ON DUPLICATE KEY UPDATE user_id = user_id
+        `;
+        connection.query(ensureWalletSql, [userId], (ensureErr) => {
+            if (ensureErr) return callback(ensureErr);
+
+            const lockSql = 'SELECT balance FROM user_wallets WHERE user_id = ? FOR UPDATE';
+            connection.query(lockSql, [userId], (err, rows) => {
+                if (err) return callback(err);
+                if (!rows || rows.length === 0) return callback(new Error('Wallet not found'));
+
+                const balanceBefore = parseFloat(rows[0].balance) || 0;
+                const balanceAfter = balanceBefore + amt;
+                const updateSql = 'UPDATE user_wallets SET balance = balance + ? WHERE user_id = ?';
+                connection.query(updateSql, [amt, userId], (updateErr) => {
+                    if (updateErr) return callback(updateErr);
+                    callback(null, { balanceBefore, balanceAfter });
+                });
+            });
+        });
+    },
+
     /**
      * Recharge wallet
      */
-    recharge: (userId, amount, description, callback) => {
+    recharge: (userId, amount, description, callback, paymentMethod = null) => {
         db.getConnection((err, connection) => {
             if (err) return callback(err);
 
@@ -354,6 +415,7 @@ const Wallet = {
                             Transaction.create({
                                 user_id: userId,
                                 type: 'recharge',
+                                payment_method: paymentMethod,
                                 amount,
                                 balance_before: balanceBefore,
                                 balance_after: balanceAfter,

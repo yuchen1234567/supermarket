@@ -8,6 +8,7 @@ const cartModel = require('../models/cart');  // Cart model
 const shippingModel = require('../models/shipping');  // Shipping model
 const addressModel = require('../models/address');  // Address model
 const Wallet = require('../models/wallet');  // Wallet model
+const db = require('../db');  // Database connection for VIP and shipping logic
 
 /**
  * Show checkout page
@@ -406,49 +407,79 @@ function downloadPDF(req, res) {
 }
 
 /**
+ * Helper function: Check whether user is VIP and still valid
+ */
+function isUserVip(userId, callback) {
+    const sql = 'SELECT vip_level, vip_expires_at FROM users WHERE id = ? LIMIT 1';
+    db.query(sql, [userId], (err, rows) => {
+        if (err || !rows || rows.length === 0) {
+            return callback(err || null, false);
+        }
+        const row = rows[0];
+        let isVip = false;
+        if (row.vip_level === 'vip') {
+            const expires = row.vip_expires_at ? new Date(row.vip_expires_at) : null; // VIP expiry time
+            if (expires && expires.getTime() > Date.now()) { // only active if expiry is in future
+                isVip = true;
+            }
+        }
+        callback(null, isVip);
+    });
+}
+
+/**
  * Helper function: Create shipment for order automatically
  * Creates a shipment record with default shipping details
  */
 function createShipmentForOrder(orderId, userId, orderTotal, callback) {
-    // Get user's default address
-    addressModel.getDefaultByUserId(userId, (err, address) => {
-        if (err) {
-            console.error('Error getting default address:', err);
-            return callback(err);
+    // Check VIP status for free shipping
+    isUserVip(userId, (vipErr, isVip) => {
+        if (vipErr) {
+            console.error('Error checking VIP status:', vipErr);
         }
         
-        // If no address found, use user's profile address from users table
-        if (!address) {
-            const db = require('../db');
-            db.query('SELECT username, contact, address FROM users WHERE id = ?', [userId], (userErr, userResults) => {
-                if (userErr || !userResults || userResults.length === 0) {
-                    return callback(new Error('User address not found'));
-                }
-                
-                const user = userResults[0];
-                createShipmentWithAddress(orderId, {
-                    recipient_name: user.username,
-                    phone: user.contact,
-                    address_line1: user.address || 'No address provided',
-                    city: 'Singapore',
-                    postal_code: '000000',
-                    country: 'Singapore'
-                }, orderTotal, callback);
-            });
-        } else {
-            createShipmentWithAddress(orderId, address, orderTotal, callback);
-        }
+        // Get user's default address
+        addressModel.getDefaultByUserId(userId, (err, address) => {
+            if (err) {
+                console.error('Error getting default address:', err);
+                return callback(err);
+            }
+            
+            // If no address found, use user's profile address from users table
+            if (!address) {
+                db.query('SELECT username, contact, address FROM users WHERE id = ?', [userId], (userErr, userResults) => {
+                    if (userErr || !userResults || userResults.length === 0) {
+                        return callback(new Error('User address not found'));
+                    }
+                    
+                    const user = userResults[0];
+                    createShipmentWithAddress(orderId, {
+                        recipient_name: user.username,
+                        phone: user.contact,
+                        address_line1: user.address || 'No address provided',
+                        city: 'Singapore',
+                        postal_code: '000000',
+                        country: 'Singapore'
+                    }, orderTotal, isVip && !vipErr, callback);
+                });
+            } else {
+                createShipmentWithAddress(orderId, address, orderTotal, isVip && !vipErr, callback);
+            }
+        });
     });
 }
 
 /**
  * Helper function: Create shipment with given address
  */
-function createShipmentWithAddress(orderId, address, orderTotal, callback) {
-    // Calculate shipping fee based on order total
+function createShipmentWithAddress(orderId, address, orderTotal, isVip, callback) {
+    // Calculate shipping fee based on order total and VIP
     let shippingFee = 5.00;  // Standard fee
     if (orderTotal >= 50) {
         shippingFee = 0;  // Free shipping for orders above $50
+    }
+    if (isVip) {
+        shippingFee = 0;  // VIP users always enjoy free shipping
     }
     
     // Determine shipping method
@@ -461,6 +492,10 @@ function createShipmentWithAddress(orderId, address, orderTotal, callback) {
     // Generate tracking number
     const trackingNumber = shippingModel.generateTrackingNumber(orderId);
     
+    const promoNote = shippingFee === 0
+        ? (isVip ? 'VIP free shipping applied.' : 'Free shipping applied.')
+        : '';
+
     // Create shipment data
     const shipmentData = {
         order_id: orderId,
@@ -478,7 +513,7 @@ function createShipmentWithAddress(orderId, address, orderTotal, callback) {
         country: address.country || 'Singapore',
         status: 'pending',
         estimated_delivery: estimatedDelivery.toISOString().split('T')[0],
-        notes: `Order total: $${orderTotal.toFixed(2)}. ${shippingFee === 0 ? 'Free shipping applied.' : ''}`
+        notes: `Order total: $${orderTotal.toFixed(2)}. ${promoNote}`
     };
     
     // Create shipment

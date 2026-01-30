@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/css/style.css">
     <style>
         .container {
-            max-width: 1200px;
+            max-width: 1500px;
             margin: 40px auto;
             padding: 0 20px;
         }
@@ -22,11 +22,13 @@
             background: white;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            overflow: hidden;
+            overflow-x: auto;
+            overflow-y: hidden;
         }
         table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 1200px;
         }
         th {
             background: #f8f9fa;
@@ -62,6 +64,22 @@
         .type-recharge { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
         .type-income { background: rgba(16, 185, 129, 0.1); color: var(--primary); }
         .type-refund { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 14px;
+            min-width: 100px;
+            height: 36px;
+            font-weight: 600;
+            border-radius: 8px;
+            text-decoration: none;
+            box-sizing: border-box;
+        }
+        th:last-child, td:last-child {
+            min-width: 260px;
+        }
     </style>
 </head>
 <body>
@@ -94,9 +112,21 @@
                             <th>Balance Before</th>
                             <th>Balance After</th>
                             <th>Date</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
+                        <%
+                            const refundStatusByRechargeTxnId = {};
+                            (transactions || []).forEach(t => {
+                                if (t && t.type === 'refund') {
+                                    const m = ((t.description || '') + '').match(/refund_of_txn_id:(\d+)/);
+                                    if (m && refundStatusByRechargeTxnId[m[1]] === undefined) {
+                                        refundStatusByRechargeTxnId[m[1]] = (t.status || 'completed');
+                                    }
+                                }
+                            });
+                        %>
                         <% transactions.forEach(trans => { %>
                             <tr>
                                 <td>#<%= trans.id %></td>
@@ -123,6 +153,31 @@
                                 <td>$<%= parseFloat(trans.balance_before).toFixed(2) %></td>
                                 <td>$<%= parseFloat(trans.balance_after).toFixed(2) %></td>
                                 <td><%= new Date(trans.created_at).toLocaleString('en-SG') %></td>
+                                <td>
+                                    <% const refundStatus = refundStatusByRechargeTxnId[String(trans.id)]; %>
+                                    <% const canRefundAgain = refundStatus && String(refundStatus).toLowerCase() === 'failed'; %>
+                                    <% if (trans.status === 'completed' && trans.type === 'recharge' && (!refundStatus || canRefundAgain)) { %>
+                                        <div style="display:flex; gap:8px; align-items:center;">
+                                            <!-- Always post refund by transaction id; parse description server-side -->
+                                            <form action="/transaction/<%= trans.id %>/refund-now" method="post" style="margin:0;">
+                                                <button type="submit" class="action-btn" style="background:#f59e0b; color:white; border:none; cursor:pointer;">
+                                                    Refund
+                                                </button>
+                                            </form>
+
+                                            <% if (trans.status === 'completed') { %>
+                                                <!-- Invoice is based on payment/transaction info -->
+                                                <a href="/transaction/<%= trans.id %>/invoice" class="action-btn" style="background:var(--primary); color:white;">
+                                                    Invoice
+                                                </a>
+                                            <% } %>
+                                        </div>
+                                    <% } else if (refundStatus) { %>
+                                        <span class="type-badge type-refund" title="Refund status"><%= String(refundStatus).toUpperCase() %></span>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
+                                </td>
                             </tr>
                         <% }) %>
                     </tbody>

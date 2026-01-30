@@ -364,6 +364,14 @@
             <!-- Cart Summary -->
             <div class="cart-summary">
                 <h3>Order Summary</h3>
+
+                <% 
+                    const isVipActive = user 
+                        && user.vip_level === 'vip' 
+                        && user.vip_expires_at 
+                        && new Date(user.vip_expires_at).getTime() > Date.now();
+                    const shippingFee = isVipActive ? 0 : (total >= 60 ? 0 : 5);
+                %>
                 
                 <div class="summary-row">
                     <span>Subtotal</span>
@@ -373,7 +381,7 @@
                 <div class="summary-row">
                     <span>Delivery Fee</span>
                     <span>
-                        <% if (total >= 60) { %>
+                        <% if (shippingFee === 0) { %>
                             <span class="free-delivery-badge">FREE ✨</span>
                         <% } else { %>
                             $5.00
@@ -381,7 +389,11 @@
                     </span>
                 </div>
                 
-                <% if (total < 60) { %>
+                <% if (isVipActive) { %>
+                    <div class="delivery-tip" style="background: rgba(16, 185, 129, 0.1); border-left-color: var(--primary);">
+                        You are a VIP. Shipping is free.
+                    </div>
+                <% } else if (total < 60 && shippingFee > 0) { %>
                     <div class="delivery-tip">
                         <i class="fas fa-info-circle"></i> 
                         Add <strong>$<%= (60 - total).toFixed(2) %></strong> more for <strong>FREE delivery!</strong>
@@ -392,7 +404,7 @@
                 
                 <div class="summary-row summary-total">
                     <span>Total Amount</span>
-                    <span>$<%= (total + (total >= 60 ? 0 : 5)).toFixed(2) %></span>
+                    <span>$<%= (total + shippingFee).toFixed(2) %></span>
                 </div>
                 
                 <div style="display: flex; gap: 15px; margin-top: 25px;">

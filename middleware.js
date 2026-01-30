@@ -18,10 +18,27 @@ const checkAuthenticated = (req, res, next) => {
         return res.redirect('/login');
     }
 
-    // Query database to verify user still exists and get latest info
-    const sql = 'SELECT id, username, email, address, contact, role FROM users WHERE id = ?';
-    db.query(sql, [req.session.user.id], (err, results) => {
+    const userId = req.session.user.id;
+    const sqlWithVip = 'SELECT id, username, email, address, contact, role, vip_level, vip_expires_at, vip_paypal_subscription_id FROM users WHERE id = ?';
+    const sqlBasic = 'SELECT id, username, email, address, contact, role FROM users WHERE id = ?';
+    db.query(sqlWithVip, [userId], (err, results) => {
         if (err) {
+            if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+                return db.query(sqlBasic, [userId], (err2, results2) => {
+                    if (err2) {
+                        console.error('Database error in checkAuthenticated:', err2);
+                        req.flash('error', 'System error, please try again');
+                        return res.redirect('/login');
+                    }
+                    if (!results2 || results2.length === 0) {
+                        req.session.destroy();
+                        req.flash('error', 'Your account no longer exists. Please contact administrator.');
+                        return res.redirect('/login');
+                    }
+                    req.session.user = results2[0];
+                    next();
+                });
+            }
             console.error('Database error in checkAuthenticated:', err);
             req.flash('error', 'System error, please try again');
             return res.redirect('/login');
@@ -52,10 +69,35 @@ const checkAdmin = (req, res, next) => {
         return res.redirect('/login');
     }
 
-    // Query database to verify user is still admin
-    const sql = 'SELECT id, username, email, role FROM users WHERE id = ? AND role = ?';
-    db.query(sql, [req.session.user.id, 'admin'], (err, results) => {
+    const userId = req.session.user.id;
+    const sqlWithVip = 'SELECT id, username, email, role, vip_level, vip_expires_at, vip_paypal_subscription_id FROM users WHERE id = ? AND role = ?';
+    const sqlBasic = 'SELECT id, username, email, role FROM users WHERE id = ? AND role = ?';
+    db.query(sqlWithVip, [userId, 'admin'], (err, results) => {
         if (err) {
+            if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+                return db.query(sqlBasic, [userId, 'admin'], (err2, results2) => {
+                    if (err2) {
+                        console.error('Database error in checkAdmin:', err2);
+                        req.flash('error', 'System error, please try again');
+                        return res.redirect('/login');
+                    }
+                    if (!results2 || results2.length === 0) {
+                        const checkUserSql = 'SELECT role FROM users WHERE id = ?';
+                        return db.query(checkUserSql, [userId], (err3, userResults) => {
+                            if (err3 || !userResults || userResults.length === 0) {
+                                req.session.destroy();
+                                req.flash('error', 'Your account no longer exists');
+                                return res.redirect('/login');
+                            }
+                            req.session.user.role = userResults[0].role;
+                            req.flash('error', 'Access denied. You no longer have administrator privileges.');
+                            return res.redirect('/shopping');
+                        });
+                    }
+                    req.session.user = results2[0];
+                    return next();
+                });
+            }
             console.error('Database error in checkAdmin:', err);
             req.flash('error', 'System error, please try again');
             return res.redirect('/login');

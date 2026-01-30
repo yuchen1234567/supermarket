@@ -12,8 +12,9 @@ require('dotenv').config();  // Load environment variables from .env file
 // Connection pool handles multiple concurrent connections
 // ========================================
 const pool = mysql.createPool({
-    host: process.env.DB_HOST,          // Database host address
-    user: process.env.DB_USER,          // Database username
+    host: process.env.DB_HOST,        // Database host address
+    port: process.env.DB_PORT,        // Database port
+    user: process.env.DB_USER,        // Database username
     password: process.env.DB_PASSWORD,  // Database password
     database: process.env.DB_NAME,      // Database name
     waitForConnections: true,           // Wait when no connections available
@@ -21,7 +22,7 @@ const pool = mysql.createPool({
     queueLimit: 0                       // No limit on queued requests
 });
 
-// Test connection
+// Test connection on startup (simple health check)
 pool.getConnection((err, connection) => {
     if (err) {
         console.error('Error connecting to MySQL:', err);

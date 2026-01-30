@@ -16,6 +16,9 @@ const Wallet = require('./models/wallet'); // Wallet model for account balance m
 
 // Import middleware
 const { checkAuthenticated, checkAdmin, validateRegistration, validateLogin } = require('./middleware');
+const alipaySandbox = require('./utils/alipaySandbox');
+const paypalSandbox = require('./utils/paypalSandbox');
+const netsSandbox = require('./utils/netsSandbox');
 
 const app = express();  // Create Express application instance
 
@@ -37,10 +40,11 @@ const upload = multer({ storage: storage });  // Create multer instance
 // Database Connection Configuration
 // ========================================
 const connection = mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',  // Database host address
+    host: process.env.DB_HOST,        // Database host address
+    port: process.env.DB_PORT,        // Database port
     user: process.env.DB_USER || 'root',  // Database username
     password: process.env.DB_PASSWORD || '',  // Database password
-    database: process.env.DB_NAME || 'freshmart_db'  // Database name
+    database: process.env.DB_NAME || 'freshmart_db',  // Database name
 });
 
 // Connect to MySQL database
@@ -660,10 +664,96 @@ app.get('/wallet', checkAuthenticated, walletControllers.viewWallet);
 app.post('/wallet/recharge', checkAuthenticated, walletControllers.recharge);
 app.get('/wallet/transactions', checkAuthenticated, transactionControllers.listUserTransactions);
 
+// VIP membership page
+app.get('/vip', checkAuthenticated, (req, res) => {
+    const user = req.session.user;
+    const sql = 'SELECT vip_level, vip_expires_at, vip_paypal_subscription_id FROM users WHERE id = ? LIMIT 1';
+    db.query(sql, [user.id], (err, rows) => {
+        let vipInfo = {
+            level: null,
+            isVip: false,
+            expiresAt: null,
+            expiresAtFormatted: null,
+            daysLeft: null,
+            subscriptionId: null
+        };
+
+        if (!err && rows && rows.length > 0) {
+            const row = rows[0];
+            vipInfo.level = row.vip_level || null;
+            vipInfo.subscriptionId = row.vip_paypal_subscription_id || null;
+
+            if (row.vip_expires_at) {
+                const expires = new Date(row.vip_expires_at);
+                if (!Number.isNaN(expires.getTime())) {
+                    vipInfo.expiresAt = expires;
+                    vipInfo.expiresAtFormatted = expires.toLocaleString('en-SG');
+                    const diffMs = expires.getTime() - Date.now();
+                    vipInfo.daysLeft = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+                }
+            }
+
+            if (row.vip_level === 'vip' && vipInfo.expiresAt && vipInfo.expiresAt.getTime() > Date.now()) {
+                vipInfo.isVip = true;
+            }
+        }
+
+        res.render('vip', {
+            user: req.session.user,
+            vipInfo,
+            messages: req.flash()
+        });
+    });
+});
+
+app.get('/alipay/return', checkAuthenticated, alipaySandbox.handleReturnPage);
+app.post('/alipay/start', checkAuthenticated, alipaySandbox.handleStart);
+app.get('/alipay/status', checkAuthenticated, alipaySandbox.handleStatus);
+app.get('/alipay/finish', checkAuthenticated, alipaySandbox.handleFinish);
+// Alipay FacePay (sandbox simulation)
+app.post('/alipay/face/start', checkAuthenticated, alipaySandbox.handleFaceStart);
+app.get('/alipay/face/pay', checkAuthenticated, alipaySandbox.handleFacePayPage);
+app.post('/alipay/face/complete', checkAuthenticated, alipaySandbox.handleFaceComplete);
+
+app.get('/paypal/return', checkAuthenticated, paypalSandbox.handleReturnPage);
+app.get('/paypal/cancel', checkAuthenticated, paypalSandbox.handleCancel);
+app.post('/paypal/start', checkAuthenticated, paypalSandbox.handleStart);
+app.get('/paypal/status', checkAuthenticated, paypalSandbox.handleStatus);
+app.get('/paypal/finish', checkAuthenticated, paypalSandbox.handleFinish);
+
+// Admin API: create PayPal VIP plan
+app.post('/admin/paypal/vip/create-plan', checkAuthenticated, checkAdmin, paypalSandbox.handleCreateVipPlan);
+
+// Admin test pages: create PayPal product/plan
+app.get('/admin/paypal/vip/test-product', checkAuthenticated, checkAdmin, paypalSandbox.renderVipProductTestPage);
+app.post('/admin/paypal/vip/test-product', checkAuthenticated, checkAdmin, paypalSandbox.handleVipProductTestCreate);
+app.get('/admin/paypal/vip/test-plan', checkAuthenticated, checkAdmin, paypalSandbox.renderVipPlanTestPage);
+app.post('/admin/paypal/vip/test-plan', checkAuthenticated, checkAdmin, paypalSandbox.handleVipPlanTestCreate);
+
+// PayPal VIP subscription routes
+app.post('/paypal/vip/start', checkAuthenticated, (req, res) => {
+    paypalSandbox.startVipSubscription(req, res, req.session.user.id);
+});
+app.get('/paypal/vip/return', checkAuthenticated, paypalSandbox.handleVipReturnPage);
+app.get('/paypal/vip/cancel', checkAuthenticated, paypalSandbox.handleVipCancelPage);
+
+app.get('/nets/pay', checkAuthenticated, netsSandbox.handlePayPage);
+app.post('/nets/start', checkAuthenticated, netsSandbox.handleStart);
+app.get('/nets/sse/payment-status/:txnRetrievalRef', checkAuthenticated, netsSandbox.handleSsePaymentStatus);
+app.get('/nets/status', checkAuthenticated, netsSandbox.handleStatus);
+app.all('/nets/return', checkAuthenticated, netsSandbox.handleReturnPage);
+app.post('/nets/s2s-end', netsSandbox.handleS2SEnd);
+app.get('/nets/finish', checkAuthenticated, netsSandbox.handleFinish);
+
 // Refund management
 app.post('/order/:orderId/request-refund', checkAuthenticated, refundControllers.requestRefund);
+app.post('/order/:orderId/refund-now', checkAuthenticated, refundControllers.refundNow);
+app.post('/transaction/:transactionId/refund-now', checkAuthenticated, refundControllers.refundTransaction);
 app.get('/wallet/refunds', checkAuthenticated, refundControllers.viewMyRefunds);
 app.post('/order/:orderId/confirm-delivery', checkAuthenticated, walletControllers.confirmDelivery);
+
+// Download transaction invoice PDF
+app.get('/transaction/:id/invoice', checkAuthenticated, transactionControllers.downloadInvoicePdf);
 
 // Admin: Refund management
 app.get('/admin/refunds', checkAuthenticated, checkAdmin, refundControllers.viewAllRefunds);

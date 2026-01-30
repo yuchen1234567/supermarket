@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alipay FacePay - Sandbox</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div style="max-width:640px;margin:60px auto;padding:30px;background:#fff;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.08)">
+        <h2>Alipay FacePay (Sandbox)</h2>
+        <p>Order No: <strong><%= outTradeNo %></strong></p>
+        <p>Amount: <strong>$<%= amount %></strong></p>
+        <p style="color:#6c757d">This is a local simulation page. Click the button below to simulate face authentication and complete the payment.</p>
+
+        <div style="display:flex;gap:10px;margin-top:20px;">
+            <button id="simulatePay" style="flex:1;padding:12px;background:#1677ff;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700">Simulate Successful FacePay</button>
+            <a href="/wallet" style="flex:1;padding:12px;text-align:center;border:2px solid #e0e0e0;border-radius:8px;text-decoration:none;color:#333">Cancel</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('simulatePay').addEventListener('click', async function () {
+            try {
+                const resp = await fetch('/alipay/face/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'Accept': 'application/json' },
+                    body: new URLSearchParams({ out_trade_no: '<%= outTradeNo %>' })
+                });
+                const data = await resp.json();
+                if (data && data.ok) {
+                    alert('Payment marked as successful. Returning to wallet.');
+                    window.location.href = '/wallet';
+                } else {
+                    alert('Failed to complete payment: ' + (data && data.error ? data.error : 'unknown'));
+                }
+            } catch (e) {
+                alert('Network error');
+            }
+        });
+    </script>
+</body>
+</html>

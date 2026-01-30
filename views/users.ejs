@@ -48,6 +48,8 @@
                             <th>Address</th>
                             <th>Contact</th>
                             <th>Role</th>
+                            <th>VIP</th>
+                            <th>VIP Expiry</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -68,6 +70,33 @@
                                         <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; background-color: #cfe2ff; color: #084298;">
                                             <i class="fas fa-user"></i> User
                                         </span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% 
+                                        const isVipActive = u.vip_level === 'vip' 
+                                            && u.vip_expires_at 
+                                            && new Date(u.vip_expires_at).getTime() > Date.now();
+                                    %>
+                                    <% if (isVipActive) { %>
+                                        <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; background-color: #fef3c7; color: #92400e;">
+                                            <i class="fas fa-crown"></i> VIP Active
+                                        </span>
+                                    <% } else if (u.vip_level === 'vip') { %>
+                                        <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; background-color: #fee2e2; color: #b91c1c;">
+                                            <i class="fas fa-crown"></i> VIP Expired
+                                        </span>
+                                    <% } else { %>
+                                        <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; background-color: #e5e7eb; color: #374151;">
+                                            Normal
+                                        </span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (u.vip_expires_at) { %>
+                                        <%= new Date(u.vip_expires_at).toLocaleString('en-SG') %>
+                                    <% } else { %>
+                                        -
                                     <% } %>
                                 </td>
                                 <td>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alipay Payment - FreshMart</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .page {
+            max-width: 720px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 28px;
+        }
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 0 0 10px 0;
+        }
+        .sub {
+            color: #6c757d;
+            margin: 0 0 20px 0;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-top: 1px solid #f0f0f0;
+        }
+        .label {
+            color: #6c757d;
+        }
+        .value {
+            font-weight: 700;
+        }
+        .status {
+            margin-top: 18px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: rgba(245, 158, 11, 0.12);
+            color: #92400e;
+            font-weight: 700;
+        }
+        .actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            cursor: pointer;
+            font-weight: 700;
+            text-decoration: none;
+            color: #333;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar', { user: user, currentPage: 'wallet' }) %>
+    <div class="page">
+        <div class="card">
+            <div class="title">Waiting for Alipay payment</div>
+            <p class="sub">This page will automatically check payment status.</p>
+
+            <div class="row">
+                <div class="label">Out Trade No</div>
+                <div class="value"><%= outTradeNo %></div>
+            </div>
+            <div class="row">
+                <div class="label">Amount</div>
+                <div class="value">$<%= amount %></div>
+            </div>
+
+            <div id="payStatus" class="status">Checking status...</div>
+
+            <div class="actions">
+                <a class="btn" href="/wallet">Back to Wallet</a>
+                <button class="btn" id="closeTabBtn" type="button" style="display:none;" onclick="tryCloseTab()">Close Tab</button>
+                <button class="btn btn-primary" type="button" onclick="checkNow()">Check Now</button>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer', { user: user }) %>
+
+    <script>
+        const outTradeNo = "<%= outTradeNo %>";
+        const statusEl = document.getElementById('payStatus');
+        let timer = null;
+        let consecutiveErrors = 0;
+
+        function setStatus(text, type) {
+            statusEl.textContent = text;
+            if (type === 'paid') {
+                statusEl.style.background = 'rgba(16, 185, 129, 0.12)';
+                statusEl.style.color = '#065f46';
+            } else if (type === 'error') {
+                statusEl.style.background = 'rgba(239, 68, 68, 0.12)';
+                statusEl.style.color = '#991b1b';
+            } else {
+                statusEl.style.background = 'rgba(245, 158, 11, 0.12)';
+                statusEl.style.color = '#92400e';
+            }
+        }
+
+        function tryCloseTab() {
+            window.close();
+            setTimeout(() => {
+                setStatus('If this tab did not close, please close it manually.', 'pending');
+            }, 500);
+        }
+
+        async function checkNow() {
+            try {
+                const resp = await fetch(`/alipay/status?out_trade_no=${encodeURIComponent(outTradeNo)}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await resp.json();
+
+                if (!data || !data.ok) {
+                    consecutiveErrors += 1;
+                    setStatus((data && data.error) ? data.error : 'Failed to check status', 'error');
+                    return;
+                }
+
+                consecutiveErrors = 0;
+                if (data.paid) {
+                    setStatus('Payment successful. You can close this tab now.', 'paid');
+                    clearInterval(timer);
+                    const closeBtn = document.getElementById('closeTabBtn');
+                    if (closeBtn) closeBtn.style.display = 'inline-block';
+                    return;
+                }
+
+                const tradeStatusText = data.tradeStatus ? ` (${data.tradeStatus})` : '';
+                setStatus(`Not paid yet. We will keep checking${tradeStatusText}`, 'pending');
+            } catch (e) {
+                consecutiveErrors += 1;
+                setStatus('Network error while checking status', 'error');
+            }
+        }
+
+        timer = setInterval(() => {
+            if (consecutiveErrors >= 5) return;
+            checkNow();
+        }, 2000);
+
+        checkNow();
+    </script>
+</body>
+</html>

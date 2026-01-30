@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create PayPal Product (VIP) - FreshMart Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 24px; margin-bottom: 20px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .row-1 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; color: var(--text-dark); }
+        input, textarea { width: 100%; padding: 12px 14px; border: 2px solid var(--medium-gray); border-radius: 10px; font-size: 14px; }
+        textarea { min-height: 90px; resize: vertical; }
+        .btn { display: inline-block; padding: 10px 18px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .btn-secondary { background: #6c757d; }
+        .alert-error { background: #fee; color: #c00; padding: 12px 14px; border-radius: 10px; }
+        .alert-success { background: #efe; color: #060; padding: 12px 14px; border-radius: 10px; }
+        pre { background: #0b1020; color: #e5e7eb; padding: 14px; border-radius: 10px; overflow: auto; font-size: 12px; }
+        code { background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 6px; }
+        @media (max-width: 900px) { .row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar', { user: user, currentPage: 'admin', pageTitle: 'PayPal VIP Test' }) %>
+
+    <div class="container">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                <div>
+                    <h2 style="margin:0;">Create PayPal Product (VIP)</h2>
+                    <div style="color: var(--dark-gray); margin-top: 6px;">Use this page to create a product in PayPal Catalogs API.</div>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <a class="btn btn-secondary" href="/admin/paypal/vip/test-plan">Go to Create Plan</a>
+                </div>
+            </div>
+        </div>
+
+        <% if (error) { %>
+            <div class="card">
+                <div class="alert-error"><%= error %></div>
+            </div>
+        <% } %>
+
+        <% if (result && result.product_id) { %>
+            <div class="card">
+                <div class="alert-success">
+                    Created product_id: <code><%= result.product_id %></code>
+                    <% if (result.apiBase) { %>
+                        <span style="margin-left:10px; color: var(--dark-gray);">apiBase: <code><%= result.apiBase %></code></span>
+                    <% } %>
+                </div>
+                <% if (result.raw) { %>
+                    <div style="margin-top: 12px;">
+                        <div style="font-weight:700; margin-bottom: 8px;">Raw Response</div>
+                        <pre><%= JSON.stringify(result.raw, null, 2) %></pre>
+                    </div>
+                <% } %>
+            </div>
+        <% } %>
+
+        <div class="card">
+            <form action="/admin/paypal/vip/test-product" method="POST">
+                <div class="row">
+                    <div>
+                        <label for="product_name">Product Name</label>
+                        <input id="product_name" name="product_name" placeholder="VIP Membership" value="<%= (form && form.product_name) ? form.product_name : '' %>">
+                    </div>
+                    <div></div>
+                </div>
+                <div class="row-1" style="margin-top: 12px;">
+                    <div>
+                        <label for="product_description">Product Description</label>
+                        <textarea id="product_description" name="product_description" placeholder="VIP subscription product"><%= (form && form.product_description) ? form.product_description : '' %></textarea>
+                    </div>
+                </div>
+                <div style="margin-top: 16px; display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn" type="submit">Create Product</button>
+                    <a class="btn btn-secondary" href="/admin/paypal/vip/test-product">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <%- include('partials/footer', { user: user }) %>
+    <script src="/js/main.js"></script>
+</body>
+</html>

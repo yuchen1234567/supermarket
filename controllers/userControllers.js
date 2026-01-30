@@ -10,7 +10,12 @@ const usersController = {
    * Shows all users in the system
    */
   listAll: (req, res) => {
-    const sql = 'SELECT id, username, email, address, contact, role FROM users ORDER BY id DESC';
+    const sql = `
+      SELECT id, username, email, address, contact, role,
+             vip_level, vip_expires_at, vip_paypal_subscription_id
+      FROM users
+      ORDER BY id DESC
+    `;
     
     db.query(sql, (err, results) => {
       if (err) {
@@ -90,7 +95,12 @@ const usersController = {
    */
   showEditForm: (req, res) => {
     const { id } = req.params;
-    const sql = 'SELECT id, username, email, address, contact, role FROM users WHERE id = ?';
+    const sql = `
+      SELECT id, username, email, address, contact, role,
+             vip_level, vip_expires_at, vip_paypal_subscription_id
+      FROM users
+      WHERE id = ?
+    `;
     
     db.query(sql, [id], (err, results) => {
       if (err || results.length === 0) {
@@ -111,7 +121,7 @@ const usersController = {
    */
   update: (req, res) => {
     const { id } = req.params;
-    const { username, email, address, contact, role } = req.body;
+    const { username, email, address, contact, role, vip_level, vip_expires_at } = req.body;
 
     // Validate fields
     if (!username || !email || !address || !contact || !role) {
@@ -125,9 +135,23 @@ const usersController = {
       return res.redirect(`/admin/users/edit/${id}`);
     }
 
-    const sql = 'UPDATE users SET username = ?, email = ?, address = ?, contact = ?, role = ? WHERE id = ?';
+    const vipLevel = vip_level === 'vip' ? 'vip' : null;
+    let vipExpiresAt = null;
+    if (vip_expires_at && vip_expires_at.trim() !== '') {
+      const parsed = new Date(vip_expires_at);
+      if (!Number.isNaN(parsed.getTime())) {
+        vipExpiresAt = parsed;
+      }
+    }
+
+    const sql = `
+      UPDATE users
+      SET username = ?, email = ?, address = ?, contact = ?, role = ?,
+          vip_level = ?, vip_expires_at = ?
+      WHERE id = ?
+    `;
     
-    db.query(sql, [username, email, address, contact, role, id], (err, result) => {
+    db.query(sql, [username, email, address, contact, role, vipLevel, vipExpiresAt, id], (err, result) => {
       if (err) {
         console.error('Error updating user:', err);
         req.flash('error', 'Error updating user');

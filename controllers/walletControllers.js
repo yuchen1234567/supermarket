@@ -4,6 +4,9 @@
 
 const Wallet = require('../models/wallet');
 const Order = require('../models/order');
+const alipaySandbox = require('../utils/alipaySandbox');
+const paypalSandbox = require('../utils/paypalSandbox');
+const netsSandbox = require('../utils/netsSandbox');
 
 /**
  * View wallet dashboard
@@ -40,6 +43,7 @@ function viewWallet(req, res) {
 function recharge(req, res) {
     const user = req.session.user;
     const amount = parseFloat(req.body.amount);
+    const paymentMethod = (req.body.paymentMethod || 'manual').toString().trim().toLowerCase();
     
     if (!amount || amount <= 0) {
         req.flash('error', 'Invalid amount');
@@ -50,6 +54,18 @@ function recharge(req, res) {
         req.flash('error', 'Maximum recharge amount is $10,000');
         return res.redirect('/wallet');
     }
+
+    if (paymentMethod === 'alipay') {
+        return alipaySandbox.startWalletRecharge(req, res, user.id, amount);
+    }
+
+    if (paymentMethod === 'paypal') {
+        return paypalSandbox.startWalletRecharge(req, res, user.id, amount);
+    }
+
+    if (paymentMethod === 'nets') {
+        return netsSandbox.startWalletRecharge(req, res, user.id, amount);
+    }
     
     Wallet.recharge(user.id, amount, 'Manual recharge', (err, result) => {
         if (err) {
@@ -59,7 +75,7 @@ function recharge(req, res) {
             req.flash('success', `Successfully recharged $${amount.toFixed(2)}`);
         }
         res.redirect('/wallet');
-    });
+    }, paymentMethod === 'manual' ? 'manual' : null);
 }
 
 /**

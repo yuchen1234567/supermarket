@@ -10,15 +10,16 @@ const db = require('../db');
 function create(transaction, callback, connection = null) {
     const sql = `
         INSERT INTO transactions (
-            user_id, order_id, type, amount,
+            user_id, order_id, type, payment_method, amount,
             balance_before, balance_after, status, description
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
         transaction.user_id,
         transaction.order_id || null,
         transaction.type,
+        transaction.payment_method || null,
         transaction.amount,
         transaction.balance_before,
         transaction.balance_after,
@@ -57,8 +58,36 @@ function listByOrder(orderId, callback) {
     db.query(sql, [orderId], callback);
 }
 
+/**
+ * Update status/description for a transaction
+ */
+function updateStatusAndDescription(id, status, description, callback, connection = null) {
+    const runner = connection || db;
+    const sql = `
+        UPDATE transactions
+        SET status = ?, description = ?
+        WHERE id = ?
+        LIMIT 1
+    `;
+    runner.query(sql, [status, description || null, id], callback);
+}
+
 module.exports = {
     create,
     listByUser,
-    listByOrder
+    listByOrder,
+    updateStatusAndDescription
 };
+
+/**
+ * Get a single transaction by id
+ */
+function getById(id, callback) {
+    const sql = 'SELECT * FROM transactions WHERE id = ? LIMIT 1';
+    db.query(sql, [id], (err, results) => {
+        if (err) return callback(err);
+        callback(null, results && results[0] ? results[0] : null);
+    });
+}
+
+module.exports.getById = getById;

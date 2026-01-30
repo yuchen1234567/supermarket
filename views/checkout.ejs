@@ -261,7 +261,11 @@
                 
                 <% 
                 let subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                let shippingFee = subtotal >= 60 ? 0 : 5;
+                const isVipActive = user 
+                    && user.vip_level === 'vip' 
+                    && user.vip_expires_at 
+                    && new Date(user.vip_expires_at).getTime() > Date.now();
+                let shippingFee = isVipActive ? 0 : (subtotal >= 60 ? 0 : 5);
                 let total = subtotal + shippingFee;
                 let hasBalance = wallet.balance >= total;
                 %>
@@ -287,8 +291,14 @@
                             <% } %>
                         </span>
                     </div>
+
+                    <% if (isVipActive) { %>
+                        <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--primary); padding: 10px; margin: 10px 0; font-size: 14px; border-radius: 8px;">
+                            You are a VIP. Shipping is free.
+                        </div>
+                    <% } %>
                     
-                    <% if (subtotal < 60 && shippingFee > 0) { %>
+                    <% if (!isVipActive && subtotal < 60 && shippingFee > 0) { %>
                         <div style="background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 10px; margin: 10px 0; font-size: 14px;">
                             <i class="fas fa-info-circle"></i> 
                             Add $<%= (60 - subtotal).toFixed(2) %> more for FREE shipping!

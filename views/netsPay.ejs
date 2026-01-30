@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NETS Payment - FreshMart</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .page {
+            max-width: 720px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 28px;
+        }
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 0 0 10px 0;
+        }
+        .sub {
+            color: #6c757d;
+            margin: 0 0 20px 0;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-top: 1px solid #f0f0f0;
+        }
+        .label {
+            color: #6c757d;
+        }
+        .value {
+            font-weight: 700;
+        }
+        .status {
+            margin-top: 18px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: rgba(245, 158, 11, 0.12);
+            color: #92400e;
+            font-weight: 700;
+        }
+        .actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            cursor: pointer;
+            font-weight: 700;
+            text-decoration: none;
+            color: #333;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar', { user: user, currentPage: 'wallet' }) %>
+    <div class="page">
+        <div class="card">
+            <div class="title">Scan to Pay (NETS QR)</div>
+            <p class="sub">Use your NETS app to scan this QR code. You can close this tab after payment.</p>
+
+            <div class="row">
+                <div class="label">Out Trade No</div>
+                <div class="value"><%= outTradeNo %></div>
+            </div>
+            <div class="row">
+                <div class="label">Wallet top-up amount</div>
+                <div class="value">$<%= amount %></div>
+            </div>
+
+            <div class="row">
+                <div class="label">Txn Retrieval Ref</div>
+                <div class="value"><%= txnRetrievalRef %></div>
+            </div>
+
+            <div style="display:flex;justify-content:center;padding:18px 0 6px 0;">
+                <img src="<%= qrCodeUrl %>" alt="NETS QR Code" style="width:260px;height:260px;border-radius:12px;border:2px solid #e0e0e0;" />
+            </div>
+
+            <div id="payStatus" class="status">Waiting for scan...</div>
+
+            <div class="actions">
+                <a class="btn" href="/wallet">Back to Wallet</a>
+                <button class="btn" type="button" onclick="tryClose()">Close Tab</button>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer', { user: user }) %>
+    <script>
+        const statusEl = document.getElementById('payStatus');
+        const outTradeNo = "<%= String(outTradeNo || '').replace(/"/g, '\\"') %>";
+        const txnRetrievalRef = "<%= String(txnRetrievalRef || '').replace(/"/g, '\\"') %>";
+        let sse = null;
+
+        function setStatus(text, type) {
+            statusEl.textContent = text;
+            if (type === 'paid') {
+                statusEl.style.background = 'rgba(16, 185, 129, 0.12)';
+                statusEl.style.color = '#065f46';
+            } else if (type === 'error') {
+                statusEl.style.background = 'rgba(239, 68, 68, 0.12)';
+                statusEl.style.color = '#991b1b';
+            } else {
+                statusEl.style.background = 'rgba(245, 158, 11, 0.12)';
+                statusEl.style.color = '#92400e';
+            }
+        }
+
+        function tryClose() {
+            window.close();
+            setTimeout(() => {
+                setStatus('If this tab did not close, please close it manually.', 'pending');
+            }, 500);
+        }
+
+        function startSse() {
+            if (!txnRetrievalRef || !outTradeNo) {
+                setStatus('Missing payment reference. Please reopen from Wallet.', 'error');
+                return;
+            }
+            const sseUrl = `/nets/sse/payment-status/${encodeURIComponent(txnRetrievalRef)}?out_trade_no=${encodeURIComponent(outTradeNo)}`;
+            try {
+                sse = new EventSource(sseUrl);
+            } catch (e) {
+                setStatus('Failed to start live status. Please check Wallet page.', 'error');
+                return;
+            }
+
+            sse.onmessage = (evt) => {
+                let payload = null;
+                try { payload = evt && evt.data ? JSON.parse(evt.data) : null; } catch (e) {}
+                if (payload && payload.success) {
+                    try { sse.close(); } catch (e) {}
+                    sse = null;
+                    setStatus('Payment successful. You can close this tab.', 'paid');
+                    setTimeout(() => tryClose(), 800);
+                    return;
+                }
+                if (payload && payload.fail) {
+                    try { sse.close(); } catch (e) {}
+                    sse = null;
+                    setStatus('Payment failed or timed out. Please try again.', 'error');
+                    return;
+                }
+
+                const dataObj = payload && payload.result && payload.result.data ? payload.result.data : null;
+                if (dataObj) {
+                    setStatus(`Waiting for payment... (code:${dataObj.response_code}, status:${dataObj.txn_status})`, 'pending');
+                } else {
+                    setStatus('Waiting for payment...', 'pending');
+                }
+            };
+
+            sse.onerror = () => {
+                try { sse.close(); } catch (e) {}
+                sse = null;
+                setStatus('Live status disconnected. Wallet page will keep checking.', 'error');
+            };
+        }
+
+        setStatus('Waiting for payment...', 'pending');
+        startSse();
+    </script>
+</body>
+</html>

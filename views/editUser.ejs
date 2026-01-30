@@ -112,7 +112,32 @@
                         <option value="admin" <%= editUser.role === 'admin' ? 'selected' : '' %>>Admin</option>
                     </select>
                 </div>
-                
+
+                <div class="form-group">
+                    <label for="vip_level">
+                        <i class="fas fa-crown"></i> VIP Status
+                    </label>
+                    <select class="form-control" id="vip_level" name="vip_level">
+                        <option value="" <%= !editUser.vip_level ? 'selected' : '' %>>None</option>
+                        <option value="vip" <%= editUser.vip_level === 'vip' ? 'selected' : '' %>>VIP</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="vip_expires_at">
+                        <i class="fas fa-clock"></i> VIP Expiry
+                    </label>
+                    <input
+                        type="datetime-local"
+                        class="form-control"
+                        id="vip_expires_at"
+                        name="vip_expires_at"
+                        value="<%= editUser.vip_expires_at ? new Date(editUser.vip_expires_at).toISOString().slice(0,16) : '' %>">
+                    <small style="color: var(--dark-gray); display: block; margin-top: 5px;">
+                        Leave empty for no expiry or when not VIP
+                    </small>
+                </div>
+
                 <div style="background-color: var(--light-gray); padding: 15px; border-radius: 8px; margin: 20px 0;">
                     <p style="margin: 0; font-size: 14px; color: var(--dark-gray);">
                         <i class="fas fa-info-circle"></i> <strong>Note:</strong> Password cannot be changed here. Users must reset their password through the login page.
